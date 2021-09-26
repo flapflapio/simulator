@@ -1,0 +1,7 @@
+# Config file for simulator
+---
+# Server parameters
+Port: 8080
+ReadTimeout: 3600
+WriteTimeout: 3600
+MaxHeaderBytes: 20480

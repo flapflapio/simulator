@@ -1,4 +1,6 @@
 # Binaries for programs and plugins
+app
+!app/
 *.exe
 *.exe~
 *.dll
@@ -12,4 +14,16 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
-# vendor/
+vendor/
+
+# Database files
+*.db
+
+# Secrets
+creds
+
+# File storage
+storage/
+
+# Editor files
+.vscode/
