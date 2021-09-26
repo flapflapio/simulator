@@ -1,6 +1,10 @@
 package simulatorservice
 
-import "github.com/flapflapio/simulator/core/types"
+import (
+	"fmt"
+
+	"github.com/flapflapio/simulator/core/types"
+)
 
 type SimulatorService struct {
 	sims    map[int]types.Simulation
@@ -36,5 +40,10 @@ func (ss *SimulatorService) Get(simulationId int) types.Simulation {
 
 // Ends a simulation
 func (ss *SimulatorService) End(simulationId int) error {
-	return ss.sims[simulationId].Kill()
+	sim := ss.sims[simulationId]
+	if sim == nil {
+		return fmt.Errorf("simulation with id '%v' does not exist", simulationId)
+	}
+	delete(ss.sims, simulationId)
+	return sim.Kill()
 }

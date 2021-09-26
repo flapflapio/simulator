@@ -17,10 +17,11 @@ const (
 )
 
 type Server struct {
+	Name   string
 	Router *mux.Router
 }
 
-func New() *Server {
+func New(name string) *Server {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFound)
 	router.MethodNotAllowedHandler = http.HandlerFunc(methodNotAllowed)
@@ -31,20 +32,26 @@ func New() *Server {
 		Path("/healthcheck").
 		HandlerFunc(healthcheck)
 
-	return &Server{Router: router}
+	return &Server{Name: name, Router: router}
 }
 
 func (s *Server) Run(config Config) error {
-	log.Printf("Starting asset-service")
+	log.Printf("Starting %v", s.Name)
 	log.Printf("Listening on %v\n", config.Port)
 
 	server := &http.Server{
 		Addr:           fmt.Sprintf(":%v", config.Port),
 		Handler:        newLoggerAndRecoveryMiddlewareWrapper(s.Router),
-		ReadTimeout:    time.Duration(config.ReadTimeout),
-		WriteTimeout:   time.Duration(config.WriteTimeout),
+		ReadTimeout:    time.Second * time.Duration(config.ReadTimeout),
+		WriteTimeout:   time.Second * time.Duration(config.WriteTimeout),
 		MaxHeaderBytes: config.MaxHeaderBytes,
 	}
+
+	log.Printf(
+		"Server config: ReadTimeout = %v, WriteTimeout = %v, MaxHeaderBytes = %v",
+		server.ReadTimeout,
+		server.WriteTimeout,
+		server.MaxHeaderBytes)
 
 	return server.ListenAndServe()
 }

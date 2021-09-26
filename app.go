@@ -13,7 +13,7 @@ import (
 func main() {
 
 	var (
-		server           = app.New()
+		server           = app.New("simulator")
 		config           = configure()
 		simulatorService = createSimulatorService()
 
@@ -24,6 +24,8 @@ func main() {
 				WithPrefix("/simulate"),
 		}
 	)
+
+	fmt.Println(config)
 
 	server.AttachControllers(controllers)
 	log.Fatal(server.Run(config))
@@ -73,5 +75,5 @@ func (ps *PhonySimulation) Done() bool {
 }
 
 func (ps *PhonySimulation) Kill() error {
-	panic("not implemented")
+	return nil
 }

@@ -6,7 +6,7 @@ STAGE	?=	dev
 in		=	app/handlers
 out		=	app
 
-docker_image_tag = atomata/asset-service:latest
+docker_image_tag = flapflapio/simulator:latest
 
 download:
 	go get -d -v

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/flapflapio/simulator/core/types"
-	"github.com/flapflapio/simulator/core/util"
 	"github.com/gorilla/mux"
 )
 
@@ -31,7 +30,6 @@ func (controller *SimulationController) Attach(router *mux.Router) {
 	for _, path := range []string{"", "/"} {
 		r.Methods("GET").
 			Path(path).
-			Queries("tape", "{tape}").
 			HandlerFunc(controller.DoSimulation)
 	}
 }
@@ -43,16 +41,21 @@ func (controller *SimulationController) WithPrefix(prefix string) types.Controll
 	}
 }
 
-// TODO: This method is a basically a placeholder for now. It doesn't really
-// TODO: simulate anything.
+// TODO: This method is a basically a placeholder for now. It uses a phony
+// TODO: simulator for now
 func (controller *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Request) {
 	var sim types.Simulation
+	var tape = r.URL.Query().Get("tape")
 
-	// Create a new simulation on a non-existant machine
-	id, err := controller.simulator.Start(struct{}{}, r.URL.Query().Get("tape"))
-	if ok := check(err, rw); !ok {
+	if tape == "" {
+		rw.WriteHeader(400)
+		rw.Write([]byte("Please provide an input with query param 'tape'\n"))
 		return
 	}
+
+	// Create a new simulation on a non-existant machine
+	id, err := controller.simulator.Start(struct{}{}, tape)
+	check(err)
 
 	// Run the simulation from start to finish
 	for sim = controller.simulator.Get(id); !sim.Done(); sim.Step() {
@@ -60,32 +63,20 @@ func (controller *SimulationController) DoSimulation(rw http.ResponseWriter, r *
 
 	// Grab the result of the simulation
 	res, err := sim.Result()
-	if ok := check(err, rw); !ok {
-		return
-	}
+	check(err)
 
-	writeSimResult(rw, res)
-}
-
-func check(err error, rw http.ResponseWriter) bool {
-	if err != nil {
-		util.MustWriteJSON(http.StatusInternalServerError, rw, map[string]interface{}{
-			"error": err.Error(),
-		})
-		return false
-	}
-	return true
-}
-
-// Writes the result of a simulation to your http response body
-func writeSimResult(rw http.ResponseWriter, res types.Result) {
+	// Serialize result
 	data, err := json.Marshal(res)
-	if ok := check(err, rw); !ok {
-		return
-	}
-	_, err = rw.Write(data)
-	if ok := check(err, rw); !ok {
-		return
-	}
+	check(err)
+
+	// Write result to response body
 	rw.WriteHeader(http.StatusOK)
+	rw.Write(append(data, '\n'))
+	controller.simulator.End(id)
+}
+
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
