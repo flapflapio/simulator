@@ -56,3 +56,16 @@ docker image that contains basically nothing.
 
 Because our base image contains nothing, we are linking the app statically - so
 there is no dependency on glibc.
+
+## Minikube
+
+Minikube uses a different docker-daemon to the one that your host machine uses.
+To build and use this docker image with minikube:
+
+```bash
+# Point your docker CLI to the minikube docker daemon
+eval $(minikube -p minikube docker-env)
+
+# Build the docker image
+make docker
+```
