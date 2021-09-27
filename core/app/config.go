@@ -23,10 +23,12 @@ var (
 )
 
 type Config struct {
-	Port           int `yaml:"Port"`
-	ReadTimeout    int `yaml:"ReadTimeout"`
-	WriteTimeout   int `yaml:"WriteTimeout"`
-	MaxHeaderBytes int `yaml:"MaxHeaderBytes"`
+	Port           int     `yaml:"Port"`
+	ReadTimeout    int     `yaml:"ReadTimeout"`
+	WriteTimeout   int     `yaml:"WriteTimeout"`
+	MaxHeaderBytes int     `yaml:"MaxHeaderBytes"`
+	Prefix         *string `yaml:"Prefix"`
+	Name           *string `yaml:"Name"`
 }
 
 // Reads parameters from `config.yml` and from env vars. The first time this
@@ -63,6 +65,8 @@ func ReadConfig(filename string) (Config, error) {
 		ReadTimeout:    extractIntOrMinusOne(cfg, "ReadTimeout"),
 		WriteTimeout:   extractIntOrMinusOne(cfg, "WriteTimeout"),
 		MaxHeaderBytes: extractIntOrMinusOne(cfg, "MaxHeaderBytes"),
+		Prefix:         extractString(cfg, "Prefix"),
+		Name:           extractString(cfg, "Name"),
 	}, nil
 }
 
@@ -72,6 +76,8 @@ func ReadEnvVarsConfig() Config {
 		ReadTimeout:    getEnvInt("READ_TIMEOUT", -1),
 		WriteTimeout:   getEnvInt("WRITE_TIMEOUT", -1),
 		MaxHeaderBytes: getEnvInt("MAX_HEADER_BYTES", -1),
+		Prefix:         getEnvString("PREFIX", nil),
+		Name:           getEnvString("NAME", nil),
 	}
 }
 
@@ -81,6 +87,8 @@ func MergeConfigs(cfg1 Config, cfg2 Config) Config {
 		ReadTimeout:    takeNonNegative(cfg1.ReadTimeout, cfg2.ReadTimeout),
 		WriteTimeout:   takeNonNegative(cfg1.WriteTimeout, cfg2.WriteTimeout),
 		MaxHeaderBytes: takeNonNegative(cfg1.MaxHeaderBytes, cfg2.MaxHeaderBytes),
+		Prefix:         takeNonNil(cfg1.Prefix, cfg2.Prefix),
+		Name:           takeNonNil(cfg1.Name, cfg2.Name),
 	}
 }
 
@@ -88,11 +96,11 @@ func CheckConfig(cfg Config) error {
 	return nil
 }
 
-func takeOtherIfEmpty(str1, str2 string) string {
-	if str2 == "" {
-		return str1
+func takeNonNil(str1, str2 *string) *string {
+	if str2 != nil {
+		return str2
 	}
-	return str2
+	return str1
 }
 
 func takeNonNegative(int1, int2 int) int {
@@ -131,16 +139,12 @@ func getEnvInt(param string, defaultValue int) int {
 	return p
 }
 
-func extractString(configMap map[string]interface{}, param string) string {
-	got, ok := configMap[param]
-	if !ok {
-		return ""
+func getEnvString(param string, defaultValue *string) *string {
+	p := defaultValue
+	if got, ok := os.LookupEnv(param); ok {
+		p = &got
 	}
-	converted, ok := got.(string)
-	if !ok {
-		return ""
-	}
-	return converted
+	return p
 }
 
 func extractIntOrMinusOne(configMap map[string]interface{}, param string) int {
@@ -153,4 +157,14 @@ func extractIntOrMinusOne(configMap map[string]interface{}, param string) int {
 		return -1
 	}
 	return converted
+}
+
+func extractString(configMap map[string]interface{}, param string) *string {
+	var p *string
+	if got, ok := configMap[param]; ok {
+		if cast, ok := got.(string); ok {
+			p = &cast
+		}
+	}
+	return p
 }

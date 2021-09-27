@@ -19,10 +19,16 @@ const (
 type Server struct {
 	Name   string
 	Router *mux.Router
+	Config Config
 }
 
-func New(name string) *Server {
-	router := mux.NewRouter()
+func New(config Config) *Server {
+	prefix := *config.Prefix
+	if prefix == "" {
+		prefix = "/"
+	}
+
+	router := mux.NewRouter().PathPrefix(prefix).Subrouter()
 	router.NotFoundHandler = http.HandlerFunc(notFound)
 	router.MethodNotAllowedHandler = http.HandlerFunc(methodNotAllowed)
 
@@ -32,23 +38,24 @@ func New(name string) *Server {
 		Path("/healthcheck").
 		HandlerFunc(healthcheck)
 
-	return &Server{Name: name, Router: router}
+	return &Server{Name: *config.Name, Router: router, Config: config}
 }
 
-func (s *Server) Run(config Config) error {
+func (s *Server) Run() error {
 	log.Printf("Starting %v", s.Name)
-	log.Printf("Listening on %v\n", config.Port)
+	log.Printf("Listening on %v\n", s.Config.Port)
 
 	server := &http.Server{
-		Addr:           fmt.Sprintf(":%v", config.Port),
+		Addr:           fmt.Sprintf(":%v", s.Config.Port),
 		Handler:        newLoggerAndRecoveryMiddlewareWrapper(s.Router),
-		ReadTimeout:    time.Second * time.Duration(config.ReadTimeout),
-		WriteTimeout:   time.Second * time.Duration(config.WriteTimeout),
-		MaxHeaderBytes: config.MaxHeaderBytes,
+		ReadTimeout:    time.Second * time.Duration(s.Config.ReadTimeout),
+		WriteTimeout:   time.Second * time.Duration(s.Config.WriteTimeout),
+		MaxHeaderBytes: s.Config.MaxHeaderBytes,
 	}
 
 	log.Printf(
-		"Server config: ReadTimeout = %v, WriteTimeout = %v, MaxHeaderBytes = %v",
+		"Server config: Prefix=%v, ReadTimeout=%v, WriteTimeout=%v, MaxHeaderBytes=%v",
+		*s.Config.Prefix,
 		server.ReadTimeout,
 		server.WriteTimeout,
 		server.MaxHeaderBytes)

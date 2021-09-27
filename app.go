@@ -13,8 +13,8 @@ import (
 func main() {
 
 	var (
-		server           = app.New("simulator")
 		config           = configure()
+		server           = app.New(config)
 		simulatorService = createSimulatorService()
 
 		// Add any new controllers to this slice
@@ -28,7 +28,7 @@ func main() {
 	fmt.Println(config)
 
 	server.AttachControllers(controllers)
-	log.Fatal(server.Run(config))
+	log.Fatal(server.Run())
 }
 
 func configure() app.Config {

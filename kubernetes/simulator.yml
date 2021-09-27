@@ -26,6 +26,7 @@ spec:
     spec:
       containers:
         - name: simulator
+          imagePullPolicy: Never
           image: flapflapio/simulator:latest
           resources:
             limits:
@@ -52,6 +53,7 @@ spec:
       targetPort: 8080
 
 # INGRESS
+# Add to your /etc/hosts: '192.168.49.2 api.flapflap.io'
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -60,13 +62,15 @@ metadata:
   namespace: flapflap
   labels:
     name: simulator-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: $1$2
 spec:
   rules:
     - host: api.flapflap.io
       http:
         paths:
           - pathType: Prefix
-            path: "/simulator"
+            path: "/simulator(/|$)(.*)"
             backend:
               service:
                 name: simulator-service
