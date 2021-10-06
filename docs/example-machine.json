@@ -1,0 +1,8 @@
+{
+  "startingState": "q0",
+  "states": [
+    { "id": "q0", "ending": false },
+    { "id": "q1", "ending": true }
+  ],
+  "transitions": [{ "start": "q0", "end": "q1", "symbol": "a" }]
+}

@@ -3,7 +3,6 @@ package types
 // A Simulation is used for inspecting the state of your machine throughout the
 // processing of an input string
 type Simulation interface {
-
 	// Perform a transition
 	Step()
 
@@ -16,7 +15,4 @@ type Simulation interface {
 
 	// Check if a simulation is finished
 	Done() bool
-
-	// Forceably ends a simulation
-	Kill() error
 }

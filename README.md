@@ -1,4 +1,4 @@
-# asset-service [![Build](https://github.com/atomata/model-service/actions/workflows/test.yml/badge.svg)](https://github.com/atomata/model-service/actions/workflows/test.yml)
+# Simulator [![Build](https://github.com/flapflapio/simulator/actions/workflows/test.yml/badge.svg)](https://github.com/flapflapio/simulator/actions/workflows/test.yml)
 
 ## QuickStart
 
@@ -29,6 +29,7 @@ write a new controller. There are 2 steps to add a new controller:
 2. Attach the controller to the application by creating a controller instance
    and placing it the `controllers` slice in `app.go`. The controllers in this
    slice will get added to the app:
+
    ```go
    // Add any new controllers to this slice
    controllers = []types.Controller{
@@ -37,6 +38,7 @@ write a new controller. There are 2 steps to add a new controller:
        WithPrefix("/assets"),
    }
    ```
+
 3. (Optional) There is also a `core/services` directory where you can put
    services that you create, or you can put the services next to the controller
    files - either way is fine.

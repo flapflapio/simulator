@@ -3,6 +3,7 @@ package simulatorservice
 import (
 	"fmt"
 
+	"github.com/flapflapio/simulator/core/simulation/machine"
 	"github.com/flapflapio/simulator/core/types"
 )
 
@@ -20,7 +21,7 @@ func New(simulationFactory types.SimulationFactory) *SimulatorService {
 }
 
 // Begins a new simulation
-func (ss *SimulatorService) Start(machine types.Machine, input string) (id int, err error) {
+func (ss *SimulatorService) Start(machine *machine.Machine, input string) (id int, err error) {
 	i := ss.nextId
 	ss.nextId++
 
@@ -45,5 +46,5 @@ func (ss *SimulatorService) End(simulationId int) error {
 		return fmt.Errorf("simulation with id '%v' does not exist", simulationId)
 	}
 	delete(ss.sims, simulationId)
-	return sim.Kill()
+	return nil
 }
