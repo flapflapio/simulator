@@ -54,7 +54,7 @@ func (controller *SimulationController) DoSimulation(rw http.ResponseWriter, r *
 	}
 
 	// Create a new simulation on a non-existant machine
-	id, err := controller.simulator.Start(struct{}{}, tape)
+	id, err := controller.simulator.Start(nil, tape)
 	check(err)
 
 	// Run the simulation from start to finish
