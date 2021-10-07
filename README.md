@@ -20,6 +20,25 @@ make docker
 make docker-run
 ```
 
+The [`Makefile`](./Makefile) just contains some convenience commands (mainly for
+building the app statically and for building the docker image with a specific
+tag). You can always use the regular `go` commands with this app:
+
+```bash
+go get -d -v     # Download dependencies
+go build -o app  # Build the app
+./app            # Run the app
+
+# Or to build with static linking:
+GOOS=linux \
+GO111MODULE=on \
+CGO_ENABLED=0 \
+    go build \
+        -ldflags="-extldflags=-static" \
+        -tags osusergo,netgo \
+        -o app
+```
+
 ## How to add new APIs
 
 This service uses controllers to group APIs together. To add more APIs, simply
@@ -30,12 +49,12 @@ write a new controller. There are 2 steps to add a new controller:
    and placing it the `controllers` slice in `app.go`. The controllers in this
    slice will get added to the app:
    ```go
-   // Add any new controllers to this slice
-   controllers = []types.Controller{
-     assetcontroller.
-       New(storageService).
-       WithPrefix("/assets"),
-   }
+		// Add any new controllers to this slice
+		controllers = []types.Controller{
+			simulationcontroller.
+				New(simulatorService).
+				WithPrefix("/simulate"),
+		}
    ```
 3. (Optional) There is also a `core/services` directory where you can put
    services that you create, or you can put the services next to the controller
