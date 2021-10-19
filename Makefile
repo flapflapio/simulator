@@ -47,9 +47,6 @@ docker-run:
 
 dewit: docker docker-run
 
-# NOTE: this build step runs tests but ignores packages within dir `test/`
-# REASONING: I wanted to be able to provide a sub directory with mutliple
-# test-related files (such as mocks and other tools) in each package.
 test:
 	go clean --testcache
 	go test $$(go list ./... | grep -vP '(node_modules/|/test/|/test$$)')

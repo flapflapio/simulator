@@ -50,12 +50,12 @@ write a new controller. There are 2 steps to add a new controller:
    slice will get added to the app:
 
    ```go
-		// Add any new controllers to this slice
-		controllers = []types.Controller{
-			simulationcontroller.
-				New(simulatorService).
-				WithPrefix("/simulate"),
-		}
+   	// Add any new controllers to this slice
+   	controllers = []types.Controller{
+   		simulationcontroller.
+   			New(simulatorService).
+   			WithPrefix("/simulate"),
+   	}
    ```
 
 3. (Optional) There is also a `core/services` directory where you can put

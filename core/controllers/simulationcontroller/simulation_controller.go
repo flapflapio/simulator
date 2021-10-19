@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/flapflapio/simulator/core/types"
+	"github.com/flapflapio/simulator/core/util"
 	"github.com/gorilla/mux"
 )
 
@@ -21,17 +22,9 @@ func New(simulator types.Simulator) *SimulationController {
 }
 
 // Attaches this controller to the given router
-func (controller *SimulationController) Attach(router *mux.Router) {
-	r := router
-	if controller.prefix != "" && controller.prefix != "/" {
-		r = router.PathPrefix(controller.prefix).Subrouter()
-	}
-
-	for _, path := range []string{"", "/"} {
-		r.Methods("GET").
-			Path(path).
-			HandlerFunc(controller.DoSimulation)
-	}
+func (sc *SimulationController) Attach(router *mux.Router) {
+	r := util.CreateSubrouter(router, sc.prefix)
+	r.Methods("GET").Path("").HandlerFunc(sc.DoSimulation)
 }
 
 func (controller *SimulationController) WithPrefix(prefix string) types.Controller {
@@ -45,8 +38,8 @@ func (controller *SimulationController) WithPrefix(prefix string) types.Controll
 // TODO: simulator for now
 func (controller *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Request) {
 	var sim types.Simulation
-	var tape = r.URL.Query().Get("tape")
 
+	tape := r.URL.Query().Get("tape")
 	if tape == "" {
 		rw.WriteHeader(400)
 		rw.Write([]byte("Please provide an input with query param 'tape'\n"))

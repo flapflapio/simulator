@@ -9,17 +9,19 @@ import (
 	"github.com/flapflapio/simulator/core/types"
 	"github.com/flapflapio/simulator/core/util"
 	"github.com/gorilla/mux"
-	"github.com/urfave/negroni"
 )
 
 const (
 	HEALTHCHECK_MESSAGE = "All good in the hood"
 )
 
+type Middleware func(http.Handler) http.Handler
+
 type Server struct {
-	Name   string
-	Router *mux.Router
-	Config Config
+	Name       string
+	Router     *mux.Router
+	Config     Config
+	Middleware []Middleware
 }
 
 func New(config Config) *Server {
@@ -47,7 +49,7 @@ func (s *Server) Run() error {
 
 	server := &http.Server{
 		Addr:           fmt.Sprintf(":%v", s.Config.Port),
-		Handler:        newLoggerAndRecoveryMiddlewareWrapper(s.Router),
+		Handler:        s.applyMiddleware(),
 		ReadTimeout:    time.Second * time.Duration(s.Config.ReadTimeout),
 		WriteTimeout:   time.Second * time.Duration(s.Config.WriteTimeout),
 		MaxHeaderBytes: s.Config.MaxHeaderBytes,
@@ -63,24 +65,50 @@ func (s *Server) Run() error {
 	return server.ListenAndServe()
 }
 
-func (s *Server) Attach(controller types.Controller) *Server {
-	controller.Attach(s.Router)
-	return s
-}
-
-func (s *Server) AttachControllers(controllers []types.Controller) *Server {
-	for _, controller := range controllers {
-		s.Attach(controller)
+// `stuff` is of type `types.Controller` or `Middleware` or a slice of either
+func (s *Server) Attach(stuff ...interface{}) {
+	for _, x := range stuff {
+		switch xx := x.(type) {
+		case types.Controller:
+			s.AttachController(xx)
+		case []types.Controller:
+			s.AttachControllers(xx...)
+		case Middleware:
+			s.AttachMiddleware(xx)
+		case []Middleware:
+			s.AttachMiddlewares(xx...)
+		}
 	}
-	return s
 }
 
-func newLoggerAndRecoveryMiddlewareWrapper(h http.Handler) http.Handler {
-	n := negroni.New()
-	n.Use(negroni.NewLogger())
-	n.Use(negroni.NewRecovery())
-	n.UseHandler(h)
-	return n
+func (s *Server) AttachController(controller types.Controller) {
+	controller.Attach(s.Router)
+}
+
+func (s *Server) AttachControllers(controllers ...types.Controller) {
+	for _, c := range controllers {
+		s.AttachController(c)
+	}
+}
+
+func (s *Server) AttachMiddleware(middleware Middleware) {
+	s.Middleware = append(s.Middleware, middleware)
+}
+
+func (s *Server) AttachMiddlewares(middlewares ...Middleware) {
+	for _, m := range middlewares {
+		s.AttachMiddleware(m)
+	}
+}
+
+// Creates an `http.Handler` by wrapping the servers Router in all registered
+// middlwares
+func (s *Server) applyMiddleware() http.Handler {
+	var mx http.Handler = s.Router
+	for i := len(s.Middleware) - 1; i >= 0; i-- {
+		mx = s.Middleware[i](mx)
+	}
+	return mx
 }
 
 func healthcheck(rw http.ResponseWriter, r *http.Request) {

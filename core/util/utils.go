@@ -3,6 +3,8 @@ package util
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func WriteJSON(status int, rw http.ResponseWriter, data map[string]interface{}) error {
@@ -29,4 +31,17 @@ func WriteOkJSON(rw http.ResponseWriter, data map[string]interface{}) error {
 
 func MustWriteOkJSON(rw http.ResponseWriter, data map[string]interface{}) {
 	MustWriteJSON(http.StatusOK, rw, data)
+}
+
+func CreateSubrouter(router *mux.Router, prefix string) *mux.Router {
+	if prefix == "" || prefix == "/" {
+		return router
+	}
+	return router.PathPrefix(prefix).Subrouter()
+}
+
+func OptionsFunc(methods string) http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		// rw.Write()
+	}
 }
