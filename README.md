@@ -51,7 +51,7 @@ write a new controller. There are 2 steps to add a new controller:
 
    ```go
    	// Add any new controllers to this slice
-   	controllers = []types.Controller{
+   	controllers = []controllers.Controller{
    		simulationcontroller.
    			New(simulatorService).
    			WithPrefix("/simulate"),

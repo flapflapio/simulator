@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/flapflapio/simulator/core/controllers"
 	"github.com/flapflapio/simulator/core/simulation/machine"
-	"github.com/flapflapio/simulator/core/util"
 	"github.com/gorilla/mux"
 )
 
@@ -22,14 +22,14 @@ func New() *SchemaController {
 	return &SchemaController{}
 }
 
-func (s *SchemaController) WithPrefix(prefix string) *SchemaController {
+func WithPrefix(prefix string) *SchemaController {
 	return &SchemaController{
 		prefix: prefix,
 	}
 }
 
 func (sc *SchemaController) Attach(router *mux.Router) {
-	r := util.CreateSubrouter(router, sc.prefix)
+	r := controllers.CreateSubrouter(router, sc.prefix)
 	r.Methods("GET").Path("/machine.schema.json").HandlerFunc(Schema)
 	r.Methods("POST").Path("/validate").HandlerFunc(Validate)
 }

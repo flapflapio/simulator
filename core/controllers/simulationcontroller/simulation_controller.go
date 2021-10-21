@@ -4,17 +4,18 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/flapflapio/simulator/core/types"
-	"github.com/flapflapio/simulator/core/util"
+	"github.com/flapflapio/simulator/core/controllers"
+	"github.com/flapflapio/simulator/core/simulation"
+	"github.com/flapflapio/simulator/core/simulation/machine"
 	"github.com/gorilla/mux"
 )
 
 type SimulationController struct {
 	prefix    string
-	simulator types.Simulator
+	simulator simulation.Simulator
 }
 
-func New(simulator types.Simulator) *SimulationController {
+func New(simulator simulation.Simulator) *SimulationController {
 	return &SimulationController{
 		prefix:    "/",
 		simulator: simulator,
@@ -22,36 +23,43 @@ func New(simulator types.Simulator) *SimulationController {
 }
 
 // Attaches this controller to the given router
-func (sc *SimulationController) Attach(router *mux.Router) {
-	r := util.CreateSubrouter(router, sc.prefix)
-	r.Methods("GET").Path("").HandlerFunc(sc.DoSimulation)
+func (c *SimulationController) Attach(router *mux.Router) {
+	r := controllers.CreateSubrouter(router, c.prefix)
+	r.Methods("POST").Path("").HandlerFunc(c.DoSimulation)
 }
 
-func (controller *SimulationController) WithPrefix(prefix string) types.Controller {
+func (c *SimulationController) WithPrefix(prefix string) *SimulationController {
 	return &SimulationController{
 		prefix:    prefix,
-		simulator: controller.simulator,
+		simulator: c.simulator,
 	}
 }
 
-// TODO: This method is a basically a placeholder for now. It uses a phony
-// TODO: simulator for now
-func (controller *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Request) {
-	var sim types.Simulation
+func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Request) {
+
+	m, err := machine.Load(r.Body)
+	if err != nil {
+		rw.WriteHeader(http.StatusUnprocessableEntity)
+		rw.Write([]byte("The machine that was sent is not " +
+			"valid or could not be processed\n"))
+		return
+	}
 
 	tape := r.URL.Query().Get("tape")
 	if tape == "" {
-		rw.WriteHeader(400)
+		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte("Please provide an input with query param 'tape'\n"))
 		return
 	}
 
+	var sim simulation.Simulation
+
 	// Create a new simulation on a non-existant machine
-	id, err := controller.simulator.Start(nil, tape)
+	id, err := c.simulator.Start(m, tape)
 	check(err)
 
 	// Run the simulation from start to finish
-	for sim = controller.simulator.Get(id); !sim.Done(); sim.Step() {
+	for sim = c.simulator.Get(id); !sim.Done(); sim.Step() {
 	}
 
 	// Grab the result of the simulation
@@ -63,9 +71,11 @@ func (controller *SimulationController) DoSimulation(rw http.ResponseWriter, r *
 	check(err)
 
 	// Write result to response body
+	rw.Header().Del("Content-Type")
+	rw.Header().Add("Content-Type", "application/json; charset=utf-8")
 	rw.WriteHeader(http.StatusOK)
 	rw.Write(append(data, '\n'))
-	controller.simulator.End(id)
+	c.simulator.End(id)
 }
 
 func check(err error) {

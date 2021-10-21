@@ -1,4 +1,4 @@
-package types
+package simulation
 
 import (
 	"github.com/flapflapio/simulator/core/simulation/machine"

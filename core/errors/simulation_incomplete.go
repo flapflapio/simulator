@@ -1,7 +1,13 @@
 package errors
 
-type SimulationNotDone struct{ Message string }
+const SIMULATION_INCOMPLETE = "simulation incomplete"
 
-func (si SimulationNotDone) Error() string {
-	return si.Message
+type SimulationNotDone struct{ Msg string }
+
+func NotDone() SimulationNotDone {
+	return SimulationNotDone{Msg: SIMULATION_INCOMPLETE}
+}
+
+func (s SimulationNotDone) Error() string {
+	return s.Msg
 }

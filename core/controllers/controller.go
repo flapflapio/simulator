@@ -1,4 +1,4 @@
-package types
+package controllers
 
 import "github.com/gorilla/mux"
 

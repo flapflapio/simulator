@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/flapflapio/simulator/core/types"
-	"github.com/flapflapio/simulator/core/util"
+	"github.com/flapflapio/simulator/core/controllers"
 	"github.com/gorilla/mux"
 )
 
@@ -65,13 +64,13 @@ func (s *Server) Run() error {
 	return server.ListenAndServe()
 }
 
-// `stuff` is of type `types.Controller` or `Middleware` or a slice of either
+// `stuff` is of type `controllers.Controller` or `Middleware` or a slice of either
 func (s *Server) Attach(stuff ...interface{}) {
 	for _, x := range stuff {
 		switch xx := x.(type) {
-		case types.Controller:
+		case controllers.Controller:
 			s.AttachController(xx)
-		case []types.Controller:
+		case []controllers.Controller:
 			s.AttachControllers(xx...)
 		case Middleware:
 			s.AttachMiddleware(xx)
@@ -81,11 +80,11 @@ func (s *Server) Attach(stuff ...interface{}) {
 	}
 }
 
-func (s *Server) AttachController(controller types.Controller) {
+func (s *Server) AttachController(controller controllers.Controller) {
 	controller.Attach(s.Router)
 }
 
-func (s *Server) AttachControllers(controllers ...types.Controller) {
+func (s *Server) AttachControllers(controllers ...controllers.Controller) {
 	for _, c := range controllers {
 		s.AttachController(c)
 	}
@@ -112,13 +111,13 @@ func (s *Server) applyMiddleware() http.Handler {
 }
 
 func healthcheck(rw http.ResponseWriter, r *http.Request) {
-	util.MustWriteOkJSON(rw, map[string]interface{}{
+	controllers.MustWriteOkJSON(rw, map[string]interface{}{
 		"message": HEALTHCHECK_MESSAGE,
 	})
 }
 
 func notFound(rw http.ResponseWriter, r *http.Request) {
-	util.MustWriteJSON(http.StatusNotFound, rw, map[string]interface{}{
+	controllers.MustWriteJSON(http.StatusNotFound, rw, map[string]interface{}{
 		"message": "The route you have requested could not be found",
 	})
 }
@@ -128,7 +127,7 @@ func methodNotAllowed(rw http.ResponseWriter, r *http.Request) {
 	if method == "" {
 		method = "GET"
 	}
-	util.MustWriteJSON(http.StatusMethodNotAllowed, rw, map[string]interface{}{
+	controllers.MustWriteJSON(http.StatusMethodNotAllowed, rw, map[string]interface{}{
 		"message": fmt.Sprintf("Method '%v' is not allowed on this route", method),
 	})
 }

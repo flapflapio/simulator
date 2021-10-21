@@ -1,4 +1,4 @@
-package types
+package simulation
 
 // A Simulation is used for inspecting the state of your machine throughout the
 // processing of an input string

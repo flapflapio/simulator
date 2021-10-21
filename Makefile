@@ -41,15 +41,14 @@ docker-run:
 		-p 8080:8080 \
 		-it \
 		--rm \
-		--env GIN_MODE=debug \
-		--name asset-service \
+		--name simulator \
 		$(docker_image_tag)
 
 dewit: docker docker-run
 
+# You can run tests like: ``
 test:
-	go clean --testcache
-	go test $$(go list ./... | grep -vP '(node_modules/|/test/|/test$$)')
+	go clean --testcache && go test ./... -v
 
 # TODO
 install:

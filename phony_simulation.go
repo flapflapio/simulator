@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/flapflapio/simulator/core/types"
+	"github.com/flapflapio/simulator/core/simulation"
 )
 
 // A "phony" simulation that accepts any input
@@ -19,12 +19,12 @@ func (ps *PhonySimulation) Step() {
 	ps.i++
 }
 
-func (ps *PhonySimulation) Stat() types.Report {
-	return types.Report{}
+func (ps *PhonySimulation) Stat() simulation.Report {
+	return simulation.Report{}
 }
 
-func (ps *PhonySimulation) Result() (types.Result, error) {
-	return types.Result{
+func (ps *PhonySimulation) Result() (simulation.Result, error) {
+	return simulation.Result{
 		Accepted: true,
 		Path:     ps.path,
 	}, nil

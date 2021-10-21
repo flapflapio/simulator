@@ -5,11 +5,13 @@ import (
 	"log"
 
 	"github.com/flapflapio/simulator/core/app"
+	"github.com/flapflapio/simulator/core/controllers"
 	"github.com/flapflapio/simulator/core/controllers/schemacontroller"
 	"github.com/flapflapio/simulator/core/controllers/simulationcontroller"
 	"github.com/flapflapio/simulator/core/services/simulatorservice"
+	"github.com/flapflapio/simulator/core/simulation"
+	"github.com/flapflapio/simulator/core/simulation/dfa"
 	"github.com/flapflapio/simulator/core/simulation/machine"
-	"github.com/flapflapio/simulator/core/types"
 )
 
 func main() {
@@ -19,14 +21,16 @@ func main() {
 		server           = app.New(config)
 		simulatorService = createSimulatorService()
 
-		// Add any new middlewares to this slice
+		// Add any new middlewares to this slice - middleware is added in
+		// reverse order (i.e. middleware at the top of this slice is applied
+		// first)
 		middleware = []app.Middleware{
 			app.LoggerAndRecovery,
 			app.TrimTrailingSlash(true),
 		}
 
 		// Add any new controllers to this slice
-		controllers = []types.Controller{
+		controllers = []controllers.Controller{
 			schemacontroller.New(),
 
 			simulationcontroller.
@@ -49,9 +53,9 @@ func configure() app.Config {
 	return config
 }
 
-func createSimulatorService() types.Simulator {
+func createSimulatorService() simulation.Simulator {
 	return simulatorservice.New(
-		func(machine *machine.Machine, input string) (types.Simulation, error) {
-			return &PhonySimulation{input: input}, nil
+		func(machine *machine.Machine, input string) (simulation.Simulation, error) {
+			return dfa.New(machine, input), nil
 		})
 }

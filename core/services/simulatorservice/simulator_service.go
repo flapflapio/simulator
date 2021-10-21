@@ -3,19 +3,19 @@ package simulatorservice
 import (
 	"fmt"
 
+	"github.com/flapflapio/simulator/core/simulation"
 	"github.com/flapflapio/simulator/core/simulation/machine"
-	"github.com/flapflapio/simulator/core/types"
 )
 
 type SimulatorService struct {
-	sims    map[int]types.Simulation
-	factory types.SimulationFactory
+	sims    map[int]simulation.Simulation
+	factory simulation.SimulationFactory
 	nextId  int
 }
 
-func New(simulationFactory types.SimulationFactory) *SimulatorService {
+func New(simulationFactory simulation.SimulationFactory) *SimulatorService {
 	return &SimulatorService{
-		sims:    map[int]types.Simulation{},
+		sims:    map[int]simulation.Simulation{},
 		factory: simulationFactory,
 	}
 }
@@ -35,7 +35,7 @@ func (ss *SimulatorService) Start(machine *machine.Machine, input string) (id in
 }
 
 // Get a simulation by id
-func (ss *SimulatorService) Get(simulationId int) types.Simulation {
+func (ss *SimulatorService) Get(simulationId int) simulation.Simulation {
 	return ss.sims[simulationId]
 }
 

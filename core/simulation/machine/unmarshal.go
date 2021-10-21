@@ -9,7 +9,6 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-const defaultSchema = "machine.schema.json"
 const errMsg = "invalid %v, must be of type " +
 	"`string`, " +
 	"`map[string]interface{}`, " +
@@ -17,6 +16,7 @@ const errMsg = "invalid %v, must be of type " +
 	"or `io.Reader`"
 
 var cachedSchema map[string]interface{} = nil
+var defaultSchema = []byte(SCHEMA)
 
 // Loads a machine from a document of type `map[string]interface{}`, `string`,
 // `[]byte`, or `io.Reader`. Uses the default schema.
@@ -253,11 +253,10 @@ func unifyErrors(errors []gojsonschema.ResultError) error {
 
 func GetSchema() (map[string]interface{}, error) {
 	if cachedSchema == nil {
-		s, err := ReadFileIntoMap(defaultSchema)
+		err := json.Unmarshal(defaultSchema, &cachedSchema)
 		if err != nil {
 			return nil, err
 		}
-		cachedSchema = s
 	}
 	return cachedSchema, nil
 }
