@@ -10,11 +10,11 @@ const (
 	// Non-Deterministic Finite Automaton
 	NFA = "NFA"
 
+	// Pushdown Automaton
+	PDA = "PDA"
+
 	// Turing Machine
 	TM = "TM"
-
-	// Pushdown Automaton
-	PD = "PD"
 )
 
 func ParseMachineType(machineType string) string {
@@ -23,8 +23,8 @@ func ParseMachineType(machineType string) string {
 		return DFA
 	case "n", "nfa", "non-deterministic finite automaton":
 		return NFA
-	case "p", "pd", "pushdown automaton":
-		return PD
+	case "p", "pd", "pda", "pushdown automaton":
+		return PDA
 	case "t", "tm", "turingmachine", "turing machine":
 		return TM
 	}

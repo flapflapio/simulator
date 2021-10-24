@@ -6,7 +6,7 @@ import (
 
 	"github.com/flapflapio/simulator/core/controllers"
 	"github.com/flapflapio/simulator/core/simulation"
-	"github.com/flapflapio/simulator/core/simulation/machine"
+	"github.com/flapflapio/simulator/core/simulation/automata"
 	"github.com/gorilla/mux"
 )
 
@@ -36,8 +36,8 @@ func (c *SimulationController) WithPrefix(prefix string) *SimulationController {
 }
 
 func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Request) {
+	m, err := automata.Load(r.Body)
 
-	m, err := machine.Load(r.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusUnprocessableEntity)
 		rw.Write([]byte("The machine that was sent is not " +

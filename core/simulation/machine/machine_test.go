@@ -78,13 +78,13 @@ func transitions(howMany int, symbolMapper func(index int) string) []Transition 
 	return transitions
 }
 
-func machinesWithDifferentStartingStates(howMany int) []*Machine {
-	var machines []*Machine
+func machinesWithDifferentStartingStates(howMany int) []*Graph {
+	var machines []*Graph
 	states := states(5, nil)
 	transitions := transitions(4, nil)
 	connectInStraightLine(&states, &transitions)
 	for i := range states {
-		machines = append(machines, &Machine{
+		machines = append(machines, &Graph{
 			Start:       &states[i],
 			States:      states,
 			Transitions: transitions,

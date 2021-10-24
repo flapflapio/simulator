@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/flapflapio/simulator/core/controllers"
+	"github.com/flapflapio/simulator/core/simulation/automata"
 	"github.com/flapflapio/simulator/core/simulation/machine"
 	"github.com/gorilla/mux"
 )
@@ -37,7 +38,7 @@ func (sc *SchemaController) Attach(router *mux.Router) {
 // If successful: 200 + machine json.
 // If the machine in request body is invalid: 422.
 func Validate(rw http.ResponseWriter, r *http.Request) {
-	m, err := machine.Load(r.Body)
+	m, err := automata.Load(r.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusUnprocessableEntity)
 		return

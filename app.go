@@ -9,9 +9,6 @@ import (
 	"github.com/flapflapio/simulator/core/controllers/schemacontroller"
 	"github.com/flapflapio/simulator/core/controllers/simulationcontroller"
 	"github.com/flapflapio/simulator/core/services/simulatorservice"
-	"github.com/flapflapio/simulator/core/simulation"
-	"github.com/flapflapio/simulator/core/simulation/dfa"
-	"github.com/flapflapio/simulator/core/simulation/machine"
 )
 
 func main() {
@@ -19,7 +16,7 @@ func main() {
 	var (
 		config           = configure()
 		server           = app.New(config)
-		simulatorService = createSimulatorService()
+		simulatorService = simulatorservice.New()
 
 		// Add any new middlewares to this slice - middleware is added in
 		// reverse order (i.e. middleware at the top of this slice is applied
@@ -51,11 +48,4 @@ func configure() app.Config {
 		log.Fatalf("%v\n", err)
 	}
 	return config
-}
-
-func createSimulatorService() simulation.Simulator {
-	return simulatorservice.New(
-		func(machine *machine.Machine, input string) (simulation.Simulation, error) {
-			return dfa.New(machine, input), nil
-		})
 }

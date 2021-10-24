@@ -5,56 +5,56 @@ import (
 	"fmt"
 )
 
-type Machine struct {
+type Graph struct {
 	Start       *State       `json:"Start"`
 	States      []State      `json:"States"`
 	Transitions []Transition `json:"Transitions"`
 }
 
-func NewMachine(start *State, states []State, transitions []Transition) *Machine {
-	return &Machine{
+func NewGraph(start *State, states []State, transitions []Transition) *Graph {
+	return &Graph{
 		Start:       start,
 		States:      states,
 		Transitions: transitions,
 	}
 }
 
-func NewBlankMachine() *Machine {
-	return &Machine{
+func NewBlankGraph() *Graph {
+	return &Graph{
 		States:      []State{},
 		Transitions: []Transition{},
 	}
 }
 
-func (m1 *Machine) WithStates(states ...State) *Machine {
+func (m1 *Graph) WithStates(states ...State) *Graph {
 	m1.States = append(m1.States, states...)
 	return m1
 }
 
-func (m *Machine) WithState(state State) *Machine {
+func (m *Graph) WithState(state State) *Graph {
 	m.States = append(m.States, state)
 	return m
 }
 
-func (m *Machine) WithTransition(transition Transition) *Machine {
+func (m *Graph) WithTransition(transition Transition) *Graph {
 	m.Transitions = append(m.Transitions, transition)
 	return m
 }
 
-func (m *Machine) WithTransitions(transitions ...Transition) *Machine {
+func (m *Graph) WithTransitions(transitions ...Transition) *Graph {
 	m.Transitions = append(m.Transitions, transitions...)
 	return m
 }
 
-func (m *Machine) String() string {
+func (m *Graph) String() string {
 	return fmt.Sprintf(
-		"Machine[Start:%v States:%v Transitions:%v]",
+		"Graph[Start:%v States:%v Transitions:%v]",
 		m.Start.Id,
 		m.States,
 		m.Transitions)
 }
 
-func (m *Machine) Json() string {
+func (m *Graph) Json() string {
 	mm := m.JsonMap()
 	data, err := json.Marshal(mm)
 	if err != nil {
@@ -63,7 +63,7 @@ func (m *Machine) Json() string {
 	return string(data)
 }
 
-func (m *Machine) JsonMap() map[string]interface{} {
+func (m *Graph) JsonMap() map[string]interface{} {
 	res := map[string]interface{}{
 		"Start":       m.Start.Id,
 		"States":      []map[string]interface{}{},
@@ -80,8 +80,8 @@ func (m *Machine) JsonMap() map[string]interface{} {
 }
 
 // Deep copy a Machine
-func (m *Machine) Copy() *Machine {
-	mm := Machine{
+func (m *Graph) Copy() *Graph {
+	mm := Graph{
 		States:      []State{},
 		Transitions: []Transition{},
 	}

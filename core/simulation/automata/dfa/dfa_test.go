@@ -71,7 +71,7 @@ func TestMachineOddA(t *testing.T) {
 	test := func(str string, accepted bool) func(*testing.T) {
 		return func(t *testing.T) {
 			t.Parallel()
-			res := simulation.ResultOf(New(m, str))
+			res := simulation.ResultOf(m.Simulate(str))
 			assert.Equal(t, accepted, res.Accepted)
 		}
 	}
@@ -84,10 +84,13 @@ func TestMachineOddA(t *testing.T) {
 	}
 }
 
-func createMachine(t *testing.T, fromString string) *machine.Machine {
+func createMachine(t *testing.T, fromString string) *DFA {
 	m, err := machine.Load([]byte(fromString))
 	assert.NoError(t, err, "machine should build okay")
-	return m
+	return &DFA{
+		Graph:    m,
+		Alphabet: "",
+	}
 }
 
 // A function for generating repeating strings of a's e.g. "aaaaaaaaa".
