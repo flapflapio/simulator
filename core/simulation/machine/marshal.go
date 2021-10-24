@@ -2,6 +2,7 @@ package machine
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -96,6 +97,9 @@ func loadReader(reader io.Reader) (map[string]interface{}, error) {
 }
 
 func loadBuffer(buf []byte) (map[string]interface{}, error) {
+	if len(buf) == 0 {
+		return nil, errors.New("cannot load machine from an empty buffer")
+	}
 	var m map[string]interface{}
 	err := json.Unmarshal(buf, &m)
 	if err != nil {
