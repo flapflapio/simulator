@@ -17,7 +17,7 @@ type TestCaseDFAMarshaling struct {
 }
 
 var machineStrings = map[string]TestCaseDFAMarshaling{
-	"OddA": TestCaseDFAMarshaling{
+	"OddA": {
 		success:   true,
 		marshaled: dfa.ODDA,
 		unmarshaled: dfa.From(dfa.DFAParams{

@@ -6,11 +6,11 @@ func RunToCompletion(sim Simulation) {
 	}
 }
 
-func ResultOf(sim Simulation) Result {
+func ResultOf(sim Simulation) *Result {
 	RunToCompletion(sim)
 	res, err := sim.Result()
 	if err != nil {
-		return Result{}
+		return nil
 	}
-	return res
+	return &res
 }
