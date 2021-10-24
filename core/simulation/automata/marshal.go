@@ -8,10 +8,12 @@ import (
 	"github.com/flapflapio/simulator/core/simulation/machine"
 )
 
+// Loads a machine from the given `document`
 func Load(document interface{}) (simulation.Machine, error) {
 	return LoadWithSchema(document, nil)
 }
 
+// Loads a machine from the given `document` using a specific schema
 func LoadWithSchema(
 	document interface{},
 	schema interface{},
@@ -25,6 +27,10 @@ func LoadWithSchema(
 		return nil, err
 	}
 	return createMachineOfType(t, documentMap, schema)
+}
+
+func Dump(mach simulation.Machine) string {
+	return mach.Json()
 }
 
 func createMachineOfType(

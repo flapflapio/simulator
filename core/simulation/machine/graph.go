@@ -11,6 +11,40 @@ type Graph struct {
 	Transitions []Transition `json:"Transitions"`
 }
 
+type GraphParams struct {
+	Start       string
+	States      []State
+	Transitions []TransitionParams
+}
+
+type TransitionParams struct {
+	Start  string
+	End    string
+	Symbol string
+}
+
+func From(params GraphParams) *Graph {
+	err := validateParams(params)
+	if err != nil {
+		return nil
+	}
+	g := Graph{
+		States: params.States,
+	}
+	if g.States == nil {
+		g.States = []State{}
+	}
+	g.Start = g.FindState(params.Start)
+	for _, t := range params.Transitions {
+		g.Transitions = append(g.Transitions, Transition{
+			Start:  g.FindState(t.Start),
+			End:    g.FindState(t.End),
+			Symbol: t.Symbol,
+		})
+	}
+	return &g
+}
+
 func NewGraph(start *State, states []State, transitions []Transition) *Graph {
 	return &Graph{
 		Start:       start,
@@ -26,36 +60,45 @@ func NewBlankGraph() *Graph {
 	}
 }
 
-func (m1 *Graph) WithStates(states ...State) *Graph {
-	m1.States = append(m1.States, states...)
-	return m1
+func (g *Graph) FindState(id string) *State {
+	for i, s := range g.States {
+		if s.Id == id {
+			return &g.States[i]
+		}
+	}
+	return nil
 }
 
-func (m *Graph) WithState(state State) *Graph {
-	m.States = append(m.States, state)
-	return m
+func (g *Graph) WithStates(states ...State) *Graph {
+	g.States = append(g.States, states...)
+	return g
 }
 
-func (m *Graph) WithTransition(transition Transition) *Graph {
-	m.Transitions = append(m.Transitions, transition)
-	return m
+func (g *Graph) WithState(state State) *Graph {
+	g.States = append(g.States, state)
+	return g
 }
 
-func (m *Graph) WithTransitions(transitions ...Transition) *Graph {
-	m.Transitions = append(m.Transitions, transitions...)
-	return m
+func (g *Graph) WithTransition(transition Transition) *Graph {
+	g.Transitions = append(g.Transitions, transition)
+	return g
 }
 
-func (m *Graph) String() string {
+func (g *Graph) WithTransitions(transitions ...Transition) *Graph {
+	g.Transitions = append(g.Transitions, transitions...)
+	return g
+}
+
+func (g *Graph) String() string {
 	return fmt.Sprintf(
 		"Graph[Start:%v States:%v Transitions:%v]",
-		m.Start.Id,
-		m.States,
-		m.Transitions)
+		g.Start.Id,
+		g.States,
+		g.Transitions)
 }
 
-func (m *Graph) Json() string {
-	mm := m.JsonMap()
+func (g *Graph) Json() string {
+	mm := g.JsonMap()
 	data, err := json.Marshal(mm)
 	if err != nil {
 		return ""
@@ -63,16 +106,16 @@ func (m *Graph) Json() string {
 	return string(data)
 }
 
-func (m *Graph) JsonMap() map[string]interface{} {
+func (g *Graph) JsonMap() map[string]interface{} {
 	res := map[string]interface{}{
-		"Start":       m.Start.Id,
+		"Start":       g.Start.Id,
 		"States":      []map[string]interface{}{},
 		"Transitions": []map[string]interface{}{},
 	}
-	for _, s := range m.States {
+	for _, s := range g.States {
 		res["States"] = append(res["States"].([]map[string]interface{}), s.JsonMap())
 	}
-	for _, t := range m.Transitions {
+	for _, t := range g.Transitions {
 		res["Transitions"] = append(
 			res["Transitions"].([]map[string]interface{}), t.JsonMap())
 	}
@@ -80,20 +123,20 @@ func (m *Graph) JsonMap() map[string]interface{} {
 }
 
 // Deep copy a Machine
-func (m *Graph) Copy() *Graph {
-	mm := Graph{
+func (g *Graph) Copy() *Graph {
+	gg := Graph{
 		States:      []State{},
 		Transitions: []Transition{},
 	}
 
 	copyTransition := func(t Transition) Transition {
 		tt := Transition{Symbol: t.Symbol}
-		for i, s := range mm.States {
+		for i, s := range gg.States {
 			if s.Id == t.Start.Id {
-				tt.Start = &mm.States[i]
+				tt.Start = &gg.States[i]
 			}
 			if s.Id == t.End.Id {
-				tt.End = &mm.States[i]
+				tt.End = &gg.States[i]
 			}
 		}
 		return tt
@@ -101,26 +144,38 @@ func (m *Graph) Copy() *Graph {
 
 	// Add states
 	var oldStartingStateId *string
-	for _, s := range m.States {
-		if s.Id == m.Start.Id {
-			oldStartingStateId = &m.Start.Id
+	for _, s := range g.States {
+		if s.Id == g.Start.Id {
+			oldStartingStateId = &g.Start.Id
 		}
-		mm.States = append(mm.States, s.Copy())
+		gg.States = append(gg.States, s.Copy())
 	}
 
 	// Add starting state
 	if oldStartingStateId != nil {
-		for i, s := range mm.States {
+		for i, s := range gg.States {
 			if s.Id == *oldStartingStateId {
-				mm.Start = &mm.States[i]
+				gg.Start = &gg.States[i]
 			}
 		}
 	}
 
 	// Add transitions
-	for _, t := range m.Transitions {
-		mm.Transitions = append(mm.Transitions, copyTransition(t))
+	for _, t := range g.Transitions {
+		gg.Transitions = append(gg.Transitions, copyTransition(t))
 	}
 
-	return &mm
+	return &gg
+}
+
+func validateParams(params GraphParams) error {
+	d, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	_, err = Load(d)
+	if err != nil {
+		return err
+	}
+	return nil
 }

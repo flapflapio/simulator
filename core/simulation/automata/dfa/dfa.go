@@ -13,6 +13,18 @@ type DFA struct {
 	Alphabet string
 }
 
+type DFAParams struct {
+	machine.GraphParams
+	Alphabet string
+}
+
+func From(params DFAParams) *DFA {
+	return &DFA{
+		Alphabet: params.Alphabet,
+		Graph:    machine.From(params.GraphParams),
+	}
+}
+
 func (d *DFA) Simulate(input string) simulation.Simulation {
 	return &DFASimulation{
 		machine:      d,
