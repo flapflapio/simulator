@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/flapflapio/simulator/core/controllers"
+	"github.com/flapflapio/simulator/core/controllers/utils"
+	"github.com/flapflapio/simulator/core/simulation/automata"
 	"github.com/flapflapio/simulator/core/simulation/machine"
-	"github.com/gorilla/mux"
+	"github.com/obonobo/mux"
 )
 
-const (
-	schemaFilename = "machine.schema.json"
-)
+const schemaFilename = "machine.schema.json"
 
 type SchemaController struct {
 	prefix string
@@ -29,7 +28,7 @@ func WithPrefix(prefix string) *SchemaController {
 }
 
 func (sc *SchemaController) Attach(router *mux.Router) {
-	r := controllers.CreateSubrouter(router, sc.prefix)
+	r := utils.CreateSubrouter(router, sc.prefix)
 	r.Methods("GET").Path("/machine.schema.json").HandlerFunc(Schema)
 	r.Methods("POST").Path("/validate").HandlerFunc(Validate)
 }
@@ -37,7 +36,7 @@ func (sc *SchemaController) Attach(router *mux.Router) {
 // If successful: 200 + machine json.
 // If the machine in request body is invalid: 422.
 func Validate(rw http.ResponseWriter, r *http.Request) {
-	m, err := machine.Load(r.Body)
+	m, err := automata.Load(r.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusUnprocessableEntity)
 		return
@@ -64,14 +63,12 @@ func Schema(rw http.ResponseWriter, r *http.Request) {
 
 func getSchema() []byte {
 	schema, err := machine.GetSchema()
-	check(err)
-	data, err := json.Marshal(schema)
-	check(err)
-	return data
-}
-
-func check(err error) {
 	if err != nil {
 		panic(err)
 	}
+	data, err := json.Marshal(schema)
+	if err != nil {
+		panic(err)
+	}
+	return data
 }

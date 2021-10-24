@@ -7,14 +7,12 @@ import (
 	"time"
 
 	"github.com/flapflapio/simulator/core/controllers"
-	"github.com/gorilla/mux"
+	"github.com/obonobo/mux"
 )
 
 const (
 	HEALTHCHECK_MESSAGE = "All good in the hood"
 )
-
-type Middleware func(http.Handler) http.Handler
 
 type Server struct {
 	Name       string
@@ -24,12 +22,7 @@ type Server struct {
 }
 
 func New(config Config) *Server {
-	prefix := *config.Prefix
-	if prefix == "" {
-		prefix = "/"
-	}
-
-	router := mux.NewRouter().PathPrefix(prefix).Subrouter()
+	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFound)
 	router.MethodNotAllowedHandler = http.HandlerFunc(methodNotAllowed)
 
@@ -55,8 +48,7 @@ func (s *Server) Run() error {
 	}
 
 	log.Printf(
-		"Server config: Prefix=%v, ReadTimeout=%v, WriteTimeout=%v, MaxHeaderBytes=%v",
-		*s.Config.Prefix,
+		"Server config: ReadTimeout=%v, WriteTimeout=%v, MaxHeaderBytes=%v",
 		server.ReadTimeout,
 		server.WriteTimeout,
 		server.MaxHeaderBytes)
@@ -111,15 +103,17 @@ func (s *Server) applyMiddleware() http.Handler {
 }
 
 func healthcheck(rw http.ResponseWriter, r *http.Request) {
-	controllers.MustWriteOkJSON(rw, map[string]interface{}{
-		"message": HEALTHCHECK_MESSAGE,
-	})
+	rw.Header().Del("Content-Type")
+	rw.Header().Add("Content-Type", "application/json; charset=utf-8")
+	rw.WriteHeader(http.StatusOK)
+	rw.Write(ErrFormat(HEALTHCHECK_MESSAGE))
 }
 
 func notFound(rw http.ResponseWriter, r *http.Request) {
-	controllers.MustWriteJSON(http.StatusNotFound, rw, map[string]interface{}{
-		"message": "The route you have requested could not be found",
-	})
+	rw.Header().Del("Content-Type")
+	rw.Header().Add("Content-Type", "application/json; charset=utf-8")
+	rw.WriteHeader(http.StatusNotFound)
+	rw.Write(ErrFormat("The route you have requested could not be found"))
 }
 
 func methodNotAllowed(rw http.ResponseWriter, r *http.Request) {
@@ -127,7 +121,13 @@ func methodNotAllowed(rw http.ResponseWriter, r *http.Request) {
 	if method == "" {
 		method = "GET"
 	}
-	controllers.MustWriteJSON(http.StatusMethodNotAllowed, rw, map[string]interface{}{
-		"message": fmt.Sprintf("Method '%v' is not allowed on this route", method),
-	})
+	rw.Header().Del("Content-Type")
+	rw.Header().Add("Content-Type", "application/json; charset=utf-8")
+	rw.WriteHeader(http.StatusMethodNotAllowed)
+	rw.Write(ErrFormat(
+		fmt.Sprintf("Method '%v' is not allowed on this route", method)))
+}
+
+func ErrFormat(message string) []byte {
+	return []byte(fmt.Sprintf(`{"Err":"%v"}`+"\n", message))
 }

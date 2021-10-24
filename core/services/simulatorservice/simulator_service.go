@@ -4,33 +4,27 @@ import (
 	"fmt"
 
 	"github.com/flapflapio/simulator/core/simulation"
-	"github.com/flapflapio/simulator/core/simulation/machine"
 )
 
 type SimulatorService struct {
-	sims    map[int]simulation.Simulation
-	factory simulation.SimulationFactory
-	nextId  int
+	sims   map[int]simulation.Simulation
+	nextId int
 }
 
-func New(simulationFactory simulation.SimulationFactory) *SimulatorService {
+func New() *SimulatorService {
 	return &SimulatorService{
-		sims:    map[int]simulation.Simulation{},
-		factory: simulationFactory,
+		sims: map[int]simulation.Simulation{},
 	}
 }
 
 // Begins a new simulation
-func (ss *SimulatorService) Start(machine *machine.Machine, input string) (id int, err error) {
+func (ss *SimulatorService) Start(
+	machine simulation.Machine,
+	input string,
+) (id int, err error) {
 	i := ss.nextId
 	ss.nextId++
-
-	sim, err := ss.factory(machine, input)
-	if err != nil {
-		return -1, err
-	}
-
-	ss.sims[i] = sim
+	ss.sims[i] = machine.Simulate(input)
 	return i, nil
 }
 
@@ -41,8 +35,7 @@ func (ss *SimulatorService) Get(simulationId int) simulation.Simulation {
 
 // Ends a simulation
 func (ss *SimulatorService) End(simulationId int) error {
-	sim := ss.sims[simulationId]
-	if sim == nil {
+	if _, ok := ss.sims[simulationId]; !ok {
 		return fmt.Errorf("simulation with id '%v' does not exist", simulationId)
 	}
 	delete(ss.sims, simulationId)

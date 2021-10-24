@@ -1,6 +1,6 @@
 package errors
 
-const msg = "no possible transition"
+const NO_POSSIBLE_TRANSITION = "no possible transition"
 
 type NoPossibleTransition struct {
 	Msg string
@@ -11,5 +11,5 @@ func (e NoPossibleTransition) Error() string {
 }
 
 func NoTrans() NoPossibleTransition {
-	return NoPossibleTransition{Msg: msg}
+	return NoPossibleTransition{Msg: NO_POSSIBLE_TRANSITION}
 }

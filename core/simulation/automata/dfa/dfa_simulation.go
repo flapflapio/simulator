@@ -6,24 +6,16 @@ import (
 	"github.com/flapflapio/simulator/core/simulation/machine"
 )
 
-type DFA struct {
-	machine      *machine.Machine
+type DFASimulation struct {
+	machine      *DFA
 	currentState *machine.State
 	input        string
 	path         []string
 	rejected     bool
 }
 
-func New(machine *machine.Machine, input string) *DFA {
-	return &DFA{
-		machine:      machine,
-		input:        input,
-		currentState: machine.Start,
-	}
-}
-
 // Perform a transition
-func (dfa *DFA) Step() {
+func (dfa *DFASimulation) Step() {
 	if dfa.Done() {
 		return
 	}
@@ -35,7 +27,7 @@ func (dfa *DFA) Step() {
 }
 
 // Get the current status (state + other info) of a simulation
-func (dfa *DFA) Stat() simulation.Report {
+func (dfa *DFASimulation) Stat() simulation.Report {
 	return simulation.Report{
 		Result: simulation.Result{
 			Accepted:       dfa.isAccepted(),
@@ -47,7 +39,7 @@ func (dfa *DFA) Stat() simulation.Report {
 
 // Get the final result of your simulation.
 // Returns a SimulationIncomplete error if the simulation is not done
-func (dfa *DFA) Result() (simulation.Result, error) {
+func (dfa *DFASimulation) Result() (simulation.Result, error) {
 	if !dfa.Done() {
 		return simulation.Result{}, errors.NotDone()
 	}
@@ -59,11 +51,11 @@ func (dfa *DFA) Result() (simulation.Result, error) {
 }
 
 // Check if a simulation is finished
-func (dfa *DFA) Done() bool {
+func (dfa *DFASimulation) Done() bool {
 	return dfa.rejected || len(dfa.input) == 0
 }
 
-func (dfa *DFA) takeNextTransition() {
+func (dfa *DFASimulation) takeNextTransition() {
 	if dfa.rejected {
 		return
 	}
@@ -75,12 +67,12 @@ func (dfa *DFA) takeNextTransition() {
 	dfa.takeTransition(next)
 }
 
-func (dfa *DFA) takeTransition(t machine.Transition) {
+func (dfa *DFASimulation) takeTransition(t machine.Transition) {
 	dfa.currentState = t.End
 	dfa.input = dfa.input[1:]
 }
 
-func (dfa *DFA) nextTransition() (machine.Transition, error) {
+func (dfa *DFASimulation) nextTransition() (machine.Transition, error) {
 	for _, t := range dfa.machine.Transitions {
 		if dfa.shouldTakeTransition(t) {
 			return t, nil
@@ -89,7 +81,7 @@ func (dfa *DFA) nextTransition() (machine.Transition, error) {
 	return machine.Transition{}, errors.NoTrans()
 }
 
-func (dfa *DFA) shouldTakeTransition(t machine.Transition) bool {
+func (dfa *DFASimulation) shouldTakeTransition(t machine.Transition) bool {
 	return !dfa.rejected &&
 		len(dfa.input) > 0 &&
 		len(t.Symbol) > 0 &&
@@ -97,13 +89,13 @@ func (dfa *DFA) shouldTakeTransition(t machine.Transition) bool {
 		dfa.input[0] == t.Symbol[0]
 }
 
-func (dfa *DFA) isAccepted() bool {
+func (dfa *DFASimulation) isAccepted() bool {
 	return !dfa.rejected &&
 		len(dfa.input) == 0 &&
 		dfa.currentState.Ending
 }
 
 // Appends the current state of the DFA onto the path
-func (dfa *DFA) logState() {
+func (dfa *DFASimulation) logState() {
 	dfa.path = append(dfa.path, dfa.currentState.Id)
 }

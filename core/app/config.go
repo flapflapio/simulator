@@ -4,31 +4,31 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 
 	"gopkg.in/yaml.v2"
 )
 
-const (
-	CONFIG_FILENAME = "config.yml"
-)
+const CONFIG_FILENAME = "config.yml"
 
-var (
-	cachedConfig  *Config
-	defaultConfig = Config{
-		Port:           8080,
-		ReadTimeout:    60,
-		WriteTimeout:   60,
-		MaxHeaderBytes: 4096,
-	}
-)
+var cache = struct {
+	sync.Mutex
+	config *Config
+}{}
+
+var defaultConfig = Config{
+	Port:           8080,
+	ReadTimeout:    60,
+	WriteTimeout:   60,
+	MaxHeaderBytes: 4096,
+}
 
 type Config struct {
-	Port           int     `yaml:"Port"`
-	ReadTimeout    int     `yaml:"ReadTimeout"`
-	WriteTimeout   int     `yaml:"WriteTimeout"`
-	MaxHeaderBytes int     `yaml:"MaxHeaderBytes"`
-	Prefix         *string `yaml:"Prefix"`
-	Name           *string `yaml:"Name"`
+	Port           int     `json:"Port"`
+	ReadTimeout    int     `json:"ReadTimeout"`
+	WriteTimeout   int     `json:"WriteTimeout"`
+	MaxHeaderBytes int     `json:"MaxHeaderBytes"`
+	Name           *string `json:"Name"`
 }
 
 // Reads parameters from `config.yml` and from env vars. The first time this
@@ -40,14 +40,16 @@ type Config struct {
 // 2. (medium) config from `config.yml`
 // 3. (low) default config, hardcoded into this file
 func GetConfig() (Config, error) {
-	if cachedConfig == nil {
+	cache.Lock()
+	defer cache.Unlock()
+	if cache.config == nil {
 		cfg, err := getConfig()
 		if err != nil {
 			return defaultConfig, err
 		}
-		cachedConfig = &cfg
+		cache.config = &cfg
 	}
-	return *cachedConfig, nil
+	return *cache.config, nil
 }
 
 func ReadConfig(filename string) (Config, error) {
@@ -65,7 +67,6 @@ func ReadConfig(filename string) (Config, error) {
 		ReadTimeout:    extractIntOrMinusOne(cfg, "ReadTimeout"),
 		WriteTimeout:   extractIntOrMinusOne(cfg, "WriteTimeout"),
 		MaxHeaderBytes: extractIntOrMinusOne(cfg, "MaxHeaderBytes"),
-		Prefix:         extractString(cfg, "Prefix"),
 		Name:           extractString(cfg, "Name"),
 	}, nil
 }
@@ -76,7 +77,6 @@ func ReadEnvVarsConfig() Config {
 		ReadTimeout:    getEnvInt("READ_TIMEOUT", -1),
 		WriteTimeout:   getEnvInt("WRITE_TIMEOUT", -1),
 		MaxHeaderBytes: getEnvInt("MAX_HEADER_BYTES", -1),
-		Prefix:         getEnvString("PREFIX", nil),
 		Name:           getEnvString("NAME", nil),
 	}
 }
@@ -87,7 +87,6 @@ func MergeConfigs(cfg1 Config, cfg2 Config) Config {
 		ReadTimeout:    takeNonNegative(cfg1.ReadTimeout, cfg2.ReadTimeout),
 		WriteTimeout:   takeNonNegative(cfg1.WriteTimeout, cfg2.WriteTimeout),
 		MaxHeaderBytes: takeNonNegative(cfg1.MaxHeaderBytes, cfg2.MaxHeaderBytes),
-		Prefix:         takeNonNil(cfg1.Prefix, cfg2.Prefix),
 		Name:           takeNonNil(cfg1.Name, cfg2.Name),
 	}
 }
