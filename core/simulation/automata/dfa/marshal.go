@@ -35,7 +35,29 @@ func LoadWithSchema(document interface{}, schema interface{}) (*DFA, error) {
 		return nil, err
 	}
 
+	err = checkThatTransitionSymbolsMatchAlphabet(dfa)
+	if err != nil {
+		return nil, err
+	}
+
 	return dfa, nil
+}
+
+func checkThatTransitionSymbolsMatchAlphabet(dfa *DFA) error {
+	for _, t := range dfa.Transitions {
+		found := false
+		for _, s := range dfa.Alphabet {
+			if string(s) == t.Symbol {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf(
+				"DFA is invalid, %v contains a symbol not present in the alphabet", t)
+		}
+	}
+	return nil
 }
 
 func checkThatStatesHaveATransitionForEverySymbol(dfa *DFA) error {
