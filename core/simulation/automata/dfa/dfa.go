@@ -27,7 +27,7 @@ func (d *DFA) String() string {
 	return fmt.Sprintf(
 		"DFA[Alphabet:%v Start:%v States:%v Transitions:%v]",
 		d.Alphabet,
-		d.Start,
+		d.Start.Id,
 		d.States,
 		d.Transitions)
 }

@@ -41,18 +41,18 @@ func LoadWithSchema(document interface{}, schema interface{}) (*DFA, error) {
 func checkThatStatesHaveATransitionForEverySymbol(dfa *DFA) error {
 	for _, state := range dfa.Graph.States {
 		for _, symbol := range dfa.Alphabet {
+			sym := string(symbol)
 			found := false
 			for _, transition := range dfa.Transitions {
-				if transition.Start.Id == state.Id &&
-					transition.Symbol == strconv.QuoteRune(symbol) {
+				if transition.Start.Id == state.Id && transition.Symbol == sym {
 					found = true
 					break
 				}
 			}
 			if !found {
 				return fmt.Errorf(
-					"DFA is invalid, state %v is missing a transition for symbol %v",
-					state, symbol)
+					"DFA is invalid, %v is missing a transition for symbol %v",
+					state, sym)
 			}
 		}
 	}

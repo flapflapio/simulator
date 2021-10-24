@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/flapflapio/simulator/core/simulation"
-	"github.com/flapflapio/simulator/core/simulation/machine"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,6 +20,8 @@ var machines = struct {
 }{
 	oddA: `
 	{
+		"Type": "DFA",
+		"Alphabet": "ab",
 		"Start": "q0",
 		"States": [
 		  { "Id": "q0", "Ending": false },
@@ -84,13 +85,10 @@ func TestMachineOddA(t *testing.T) {
 	}
 }
 
-func createMachine(t *testing.T, fromString string) *DFA {
-	m, err := machine.Load([]byte(fromString))
+func createMachine(t *testing.T, fromString string) simulation.Machine {
+	m, err := Load([]byte(fromString))
 	assert.NoError(t, err, "machine should build okay")
-	return &DFA{
-		Graph:    m,
-		Alphabet: "",
-	}
+	return m
 }
 
 // A function for generating repeating strings of a's e.g. "aaaaaaaaa".
