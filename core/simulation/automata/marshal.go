@@ -44,8 +44,6 @@ func createMachineOfType(
 	case machine.NFA:
 	case machine.PDA:
 	case machine.TM:
-	default:
-		return dfa.LoadWithSchema(document, schema)
 	}
 	return nil, errors.New(
 		"machine was not able to be created, unrecognized machine type")

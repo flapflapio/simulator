@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/flapflapio/simulator/core/controllers"
+	"github.com/flapflapio/simulator/core/controllers/utils"
 	"github.com/flapflapio/simulator/core/simulation"
 	"github.com/flapflapio/simulator/core/simulation/automata"
 	"github.com/gorilla/mux"
@@ -24,7 +24,7 @@ func New(simulator simulation.Simulator) *SimulationController {
 
 // Attaches this controller to the given router
 func (c *SimulationController) Attach(router *mux.Router) {
-	r := controllers.CreateSubrouter(router, c.prefix)
+	r := utils.CreateSubrouter(router, c.prefix)
 	r.Methods("POST").Path("").HandlerFunc(c.DoSimulation)
 }
 

@@ -11,6 +11,17 @@ const SCHEMA = `
   "type": "object",
 
   "properties": {
+    "Type": {
+      "description": "What type of state machine this is. Must be one of: 'DFA', 'NFA', 'PDA', or 'TM'",
+      "type": "string",
+      "pattern": "(DFA|NFA|PDA|TM)"
+    },
+
+    "Alphabet": {
+      "description": "The symbols that are accepted by the machine. This is a string where every character is a valid symbol accepted by the machine. If this field is omitted, then the alphabet will be inferred from the Transitions field.",
+      "type": "string"
+    },
+
     "Start": {
       "description": "The 'Id' field for the starting state of the machine",
       "type": "string",
@@ -66,6 +77,6 @@ const SCHEMA = `
     }
   },
 
-  "required": ["Start", "States", "Transitions"]
+  "required": ["Start", "States", "Transitions", "Type"]
 }
 `

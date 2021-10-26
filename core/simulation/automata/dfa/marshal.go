@@ -14,32 +14,26 @@ func Load(document interface{}) (*DFA, error) {
 
 func LoadWithSchema(document interface{}, schema interface{}) (*DFA, error) {
 	dfa := &DFA{}
-
 	documentMap, err := machine.LoadMap(document)
 	if err != nil {
 		return nil, err
 	}
-
 	dfa.Graph, err = machine.LoadWithSchema(documentMap, schema)
 	if err != nil {
 		return nil, err
 	}
-
 	err = addAlphabet(dfa, documentMap)
 	if err != nil {
 		return nil, err
 	}
-
 	err = checkThatStatesHaveATransitionForEverySymbol(dfa)
 	if err != nil {
 		return nil, err
 	}
-
 	err = checkThatTransitionSymbolsMatchAlphabet(dfa)
 	if err != nil {
 		return nil, err
 	}
-
 	return dfa, nil
 }
 
