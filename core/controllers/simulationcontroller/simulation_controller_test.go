@@ -15,76 +15,91 @@ import (
 	"github.com/obonobo/mux"
 )
 
-var defaultService = newMockmockSimulatorService(0)
+var defaultService = func() *mockSimulatorService {
+	return newMockmockSimulatorService(0)
+}
 
 type testCaseDoSimulation struct {
-	name     string
-	status   int
-	method   string
-	tape     string
-	machine  string
-	response string
-	service  *mockSimulatorService
+	name          string
+	status        int
+	method        string
+	tape          string
+	machine       string
+	response      string
+	service       func() *mockSimulatorService
+	serviceCalled [3]int
 }
 
 var testCasesDoSimulation = []testCaseDoSimulation{
 	{
-		name:    "valid",
-		service: defaultService,
-		method:  "POST",
-		tape:    "aaba",
-		machine: dfa.ODDA,
-		status:  http.StatusOK,
+		name:          "valid",
+		service:       defaultService,
+		serviceCalled: [3]int{1, 1, 1},
+		method:        "POST",
+		tape:          "aaba",
+		machine:       dfa.ODDA,
+		status:        http.StatusOK,
 		response: `{
 			"Accepted": true,
-			"Path": ["q0", "q1", "q2", "q3", "q4"],
+			"Path": ["q0", "q1", "q2", "q3"],
 			"RemainingInput": ""
 		}`,
 	},
 	{
-		name:     "invalid-doesn't-load",
-		service:  defaultService,
-		method:   "POST",
-		tape:     "aaba",
-		machine:  dfa.ODDA,
-		status:   http.StatusUnprocessableEntity,
-		response: INVALID_MACHINE_MSG,
+		name:          "invalid-doesn't-load",
+		service:       defaultService,
+		serviceCalled: [3]int{1, 1, 1},
+		method:        "POST",
+		tape:          "aaba",
+		machine:       dfa.ODDA,
+		status:        http.StatusUnprocessableEntity,
+		response:      INVALID_MACHINE_MSG,
 	},
 	{
-		name:     "invalid-no-tape-provided",
-		service:  defaultService,
-		method:   "POST",
-		tape:     "",
-		machine:  dfa.ODDA,
-		status:   http.StatusBadRequest,
-		response: PLEASE_PROVIDE_A_TAPE_MSG,
+		name:          "invalid-no-tape-provided",
+		service:       defaultService,
+		serviceCalled: [3]int{0, 0, 0},
+		method:        "POST",
+		tape:          "",
+		machine:       dfa.ODDA,
+		status:        http.StatusBadRequest,
+		response:      PLEASE_PROVIDE_A_TAPE_MSG,
 	},
 	{
-		name:     "invalid-simulator-start-fails",
-		service:  newMockmockSimulatorService(FAIL_ON_START),
-		method:   "POST",
-		tape:     "aaba",
-		machine:  dfa.ODDA,
-		status:   http.StatusInternalServerError,
-		response: FAILED_TO_CREATE_A_NEW_SIMULATION,
+		name: "invalid-simulator-start-fails",
+		service: func() *mockSimulatorService {
+			return newMockmockSimulatorService(FAIL_ON_START)
+		},
+		serviceCalled: [3]int{1, 1, 1},
+		method:        "POST",
+		tape:          "aaba",
+		machine:       dfa.ODDA,
+		status:        http.StatusInternalServerError,
+		response:      FAILED_TO_CREATE_A_NEW_SIMULATION,
 	},
 	{
-		name:     "invalid-simulator-result-fails",
-		service:  newMockmockSimulatorService(FAIL_ON_RESULT),
-		method:   "POST",
-		tape:     "aaba",
-		machine:  dfa.ODDA,
-		status:   http.StatusInternalServerError,
-		response: FAILED_TO_OBTAIN_RESULTS_OF_SIMULATION,
+		name: "invalid-simulator-result-fails",
+		service: func() *mockSimulatorService {
+			return newMockmockSimulatorService(FAIL_ON_RESULT)
+		},
+		serviceCalled: [3]int{1, 1, 1},
+		method:        "POST",
+		tape:          "aaba",
+		machine:       dfa.ODDA,
+		status:        http.StatusInternalServerError,
+		response:      FAILED_TO_OBTAIN_RESULTS_OF_SIMULATION,
 	},
 	{
-		name:     "invalid-json-serialization-fails",
-		service:  newMockmockSimulatorService(RESULT_UNSERIALIZABLE),
-		method:   "POST",
-		tape:     "aaba",
-		machine:  dfa.ODDA,
-		status:   http.StatusInternalServerError,
-		response: FAILED_TO_CREATE_A_RESPONSE,
+		name: "invalid-json-serialization-fails",
+		service: func() *mockSimulatorService {
+			return newMockmockSimulatorService(RESULT_UNSERIALIZABLE)
+		},
+		serviceCalled: [3]int{1, 1, 1},
+		method:        "POST",
+		tape:          "aaba",
+		machine:       dfa.ODDA,
+		status:        http.StatusInternalServerError,
+		response:      FAILED_TO_CREATE_A_RESPONSE,
 	},
 }
 
@@ -94,8 +109,8 @@ func TestDoSimulation(t *testing.T) {
 	test := func(tc testCaseDoSimulation) func(*testing.T) {
 		return func(t *testing.T) {
 			t.Parallel()
-
-			controller := New(tc.service)
+			service := tc.service()
+			controller := New(service)
 			controller.Attach(router)
 
 			recorder := httptest.NewRecorder()
@@ -106,7 +121,7 @@ func TestDoSimulation(t *testing.T) {
 			}
 
 			req, err := http.NewRequest(tc.method,
-				fmt.Sprintf("simulate%v", tt),
+				fmt.Sprintf("/simulate%v", tt),
 				bytes.NewBufferString(tc.machine))
 
 			if err != nil {
@@ -116,7 +131,10 @@ func TestDoSimulation(t *testing.T) {
 			router.ServeHTTP(recorder, req)
 			assertStatusCode(t, tc.status, recorder)
 			assertResponse(t, tc.response, recorder.Body.String())
-			assertMockService(t, tc.service, 1, 1, 1)
+			assertMockService(t, service,
+				tc.serviceCalled[0],
+				tc.serviceCalled[1],
+				tc.serviceCalled[2])
 		}
 	}
 

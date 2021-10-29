@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 
 	"gopkg.in/yaml.v2"
 )
@@ -11,6 +12,19 @@ import (
 const (
 	CONFIG_FILENAME = "config.yml"
 )
+
+var cache = struct {
+	sync.Mutex
+	config         *Config
+	defaultConfig Config
+}{
+	defaultConfig: Config{
+		Port:           8080,
+		ReadTimeout:    60,
+		WriteTimeout:   60,
+		MaxHeaderBytes: 4096,
+	},
+}
 
 var (
 	cachedConfig  *Config
@@ -39,14 +53,23 @@ type Config struct {
 // 2. (medium) config from `config.yml`
 // 3. (low) default config, hardcoded into this file
 func GetConfig() (Config, error) {
-	if cachedConfig == nil {
+	// if cachedConfig == nil {
+	// 	cfg, err := getConfig()
+	// 	if err != nil {
+	// 		return defaultConfig, err
+	// 	}
+	// 	cachedConfig = &cfg
+	// }
+	// return *cachedConfig, nil
+
+	if cache.config == nil {
 		cfg, err := getConfig()
 		if err != nil {
-			return defaultConfig, err
+			return cache.defaultConfig, err
 		}
-		cachedConfig = &cfg
+		cache.config = &cfg
 	}
-	return *cachedConfig, nil
+	return *cache.config, nil
 }
 
 func ReadConfig(filename string) (Config, error) {

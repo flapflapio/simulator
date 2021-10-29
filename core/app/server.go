@@ -1,7 +1,6 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -104,30 +103,17 @@ func (s *Server) applyMiddleware() http.Handler {
 }
 
 func healthcheck(rw http.ResponseWriter, r *http.Request) {
-	data, err := json.Marshal(map[string]string{
-		"message": HEALTHCHECK_MESSAGE,
-	})
-	if err != nil {
-		panic(err)
-	}
 	rw.Header().Del("Content-Type")
 	rw.Header().Add("Content-Type", "application/json; charset=utf-8")
 	rw.WriteHeader(http.StatusOK)
-	rw.Write(data)
+	rw.Write(ErrFormat(HEALTHCHECK_MESSAGE))
 }
 
 func notFound(rw http.ResponseWriter, r *http.Request) {
-	data, err := json.Marshal(map[string]string{
-		"message": "The route you have requested could not be found",
-	})
-	if err != nil {
-		panic(err)
-	}
-
 	rw.Header().Del("Content-Type")
 	rw.Header().Add("Content-Type", "application/json; charset=utf-8")
 	rw.WriteHeader(http.StatusNotFound)
-	rw.Write(data)
+	rw.Write(ErrFormat("The route you have requested could not be found"))
 }
 
 func methodNotAllowed(rw http.ResponseWriter, r *http.Request) {
@@ -135,16 +121,13 @@ func methodNotAllowed(rw http.ResponseWriter, r *http.Request) {
 	if method == "" {
 		method = "GET"
 	}
-
-	data, err := json.Marshal(map[string]string{
-		"message": fmt.Sprintf("Method '%v' is not allowed on this route", method),
-	})
-	if err != nil {
-		panic(err)
-	}
-
 	rw.Header().Del("Content-Type")
 	rw.Header().Add("Content-Type", "application/json; charset=utf-8")
 	rw.WriteHeader(http.StatusMethodNotAllowed)
-	rw.Write(data)
+	rw.Write(ErrFormat(
+		fmt.Sprintf("Method '%v' is not allowed on this route", method)))
+}
+
+func ErrFormat(message string) []byte {
+	return []byte(fmt.Sprintf(`{"Err":"%v"}`+"\n", message))
 }
