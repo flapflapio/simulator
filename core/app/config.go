@@ -27,7 +27,6 @@ type Config struct {
 	ReadTimeout    int     `yaml:"ReadTimeout"`
 	WriteTimeout   int     `yaml:"WriteTimeout"`
 	MaxHeaderBytes int     `yaml:"MaxHeaderBytes"`
-	Prefix         *string `yaml:"Prefix"`
 	Name           *string `yaml:"Name"`
 }
 
@@ -65,7 +64,6 @@ func ReadConfig(filename string) (Config, error) {
 		ReadTimeout:    extractIntOrMinusOne(cfg, "ReadTimeout"),
 		WriteTimeout:   extractIntOrMinusOne(cfg, "WriteTimeout"),
 		MaxHeaderBytes: extractIntOrMinusOne(cfg, "MaxHeaderBytes"),
-		Prefix:         extractString(cfg, "Prefix"),
 		Name:           extractString(cfg, "Name"),
 	}, nil
 }
@@ -76,7 +74,6 @@ func ReadEnvVarsConfig() Config {
 		ReadTimeout:    getEnvInt("READ_TIMEOUT", -1),
 		WriteTimeout:   getEnvInt("WRITE_TIMEOUT", -1),
 		MaxHeaderBytes: getEnvInt("MAX_HEADER_BYTES", -1),
-		Prefix:         getEnvString("PREFIX", nil),
 		Name:           getEnvString("NAME", nil),
 	}
 }
@@ -87,7 +84,6 @@ func MergeConfigs(cfg1 Config, cfg2 Config) Config {
 		ReadTimeout:    takeNonNegative(cfg1.ReadTimeout, cfg2.ReadTimeout),
 		WriteTimeout:   takeNonNegative(cfg1.WriteTimeout, cfg2.WriteTimeout),
 		MaxHeaderBytes: takeNonNegative(cfg1.MaxHeaderBytes, cfg2.MaxHeaderBytes),
-		Prefix:         takeNonNil(cfg1.Prefix, cfg2.Prefix),
 		Name:           takeNonNil(cfg1.Name, cfg2.Name),
 	}
 }

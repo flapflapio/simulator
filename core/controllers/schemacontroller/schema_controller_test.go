@@ -10,7 +10,7 @@ import (
 
 	"github.com/flapflapio/simulator/core/simulation/automata/dfa"
 	"github.com/flapflapio/simulator/core/simulation/machine"
-	"github.com/gorilla/mux"
+	"github.com/obonobo/mux"
 )
 
 type assertion struct {

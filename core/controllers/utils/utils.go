@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 
-	"github.com/gorilla/mux"
+	"github.com/obonobo/mux"
 )
 
 func CreateSubrouter(router *mux.Router, prefix string) *mux.Router {

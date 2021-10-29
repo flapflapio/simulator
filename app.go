@@ -23,7 +23,7 @@ func main() {
 		// first)
 		middleware = []app.Middleware{
 			app.LoggerAndRecovery,
-			app.TrimTrailingSlash(true),
+			app.TrimTrailingSlash,
 		}
 
 		// Add any new controllers to this slice

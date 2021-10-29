@@ -7,7 +7,7 @@ import (
 	"github.com/flapflapio/simulator/core/controllers/utils"
 	"github.com/flapflapio/simulator/core/simulation"
 	"github.com/flapflapio/simulator/core/simulation/automata"
-	"github.com/gorilla/mux"
+	"github.com/obonobo/mux"
 )
 
 const (

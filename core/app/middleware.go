@@ -2,10 +2,11 @@ package app
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/urfave/negroni"
 )
+
+type Middleware func(http.Handler) http.Handler
 
 func LoggerAndRecovery(h http.Handler) http.Handler {
 	n := negroni.New()
@@ -18,21 +19,11 @@ func LoggerAndRecovery(h http.Handler) http.Handler {
 // Returns a middleware that trims trailing slashes. If `allSlashes` is `true`,
 // the middlware trims all trailing slashes, otherwise the middleware trims only
 // a single trailing slash
-func TrimTrailingSlash(allSlashes bool) Middleware {
-	if !allSlashes {
-		return func(next http.Handler) http.Handler {
-			return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-				r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
-				next.ServeHTTP(rw, r)
-			})
+func TrimTrailingSlash(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		for l := len(r.URL.Path); l > 1 && r.URL.Path[l-2:] == "//"; l = len(r.URL.Path) {
+			r.URL.Path = r.URL.Path[:l-1]
 		}
-	}
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-			for len(r.URL.Path) > 0 && r.URL.Path[len(r.URL.Path)-1] == '/' {
-				r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
-			}
-			next.ServeHTTP(rw, r)
-		})
-	}
+		next.ServeHTTP(rw, r)
+	})
 }

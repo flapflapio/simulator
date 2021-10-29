@@ -12,7 +12,7 @@ import (
 
 	"github.com/flapflapio/simulator/core/simulation"
 	"github.com/flapflapio/simulator/core/simulation/automata/dfa"
-	"github.com/gorilla/mux"
+	"github.com/obonobo/mux"
 )
 
 var defaultService = newMockmockSimulatorService(0)

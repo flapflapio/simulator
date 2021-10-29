@@ -8,14 +8,12 @@ import (
 	"time"
 
 	"github.com/flapflapio/simulator/core/controllers"
-	"github.com/gorilla/mux"
+	"github.com/obonobo/mux"
 )
 
 const (
 	HEALTHCHECK_MESSAGE = "All good in the hood"
 )
-
-type Middleware func(http.Handler) http.Handler
 
 type Server struct {
 	Name       string
@@ -25,12 +23,6 @@ type Server struct {
 }
 
 func New(config Config) *Server {
-	prefix := *config.Prefix
-	if prefix == "" {
-		prefix = "/"
-	}
-
-	// router := mux.NewRouter().PathPrefix(prefix).Subrouter()
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFound)
 	router.MethodNotAllowedHandler = http.HandlerFunc(methodNotAllowed)
@@ -57,8 +49,7 @@ func (s *Server) Run() error {
 	}
 
 	log.Printf(
-		"Server config: Prefix=%v, ReadTimeout=%v, WriteTimeout=%v, MaxHeaderBytes=%v",
-		*s.Config.Prefix,
+		"Server config: ReadTimeout=%v, WriteTimeout=%v, MaxHeaderBytes=%v",
 		server.ReadTimeout,
 		server.WriteTimeout,
 		server.MaxHeaderBytes)

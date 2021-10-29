@@ -8,7 +8,7 @@ import (
 	"github.com/flapflapio/simulator/core/controllers/utils"
 	"github.com/flapflapio/simulator/core/simulation/automata"
 	"github.com/flapflapio/simulator/core/simulation/machine"
-	"github.com/gorilla/mux"
+	"github.com/obonobo/mux"
 )
 
 const schemaFilename = "machine.schema.json"

@@ -8,6 +8,3 @@ Port: 8080
 ReadTimeout: 3600
 WriteTimeout: 3600
 MaxHeaderBytes: 20480
-
-# The prefix route, if any, on which the app is being hosted
-Prefix: "/"
