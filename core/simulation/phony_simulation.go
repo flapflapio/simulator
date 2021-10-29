@@ -1,28 +1,38 @@
 package simulation
 
 import (
+	"errors"
 	"fmt"
 )
 
 // A "phony" simulation that accepts any input
 type PhonySimulation struct {
-	path  []string
-	input string
-	i     int
+	Path          []string
+	Input         string
+	I             int
+	MethodsCalled struct {
+		Step   int
+		Stat   int
+		Result int
+		Done   int
+		Kill   int
+	}
+	FailOnResult bool
 }
 
-func NewPhonySimulation(input string) *PhonySimulation {
+func NewPhonySimulation(input string, failOnResult bool) *PhonySimulation {
 	return &PhonySimulation{
-		path:  make([]string, len(input)),
-		input: input,
-		i:     0,
+		Path:         make([]string, len(input)),
+		Input:        input,
+		I:            0,
+		FailOnResult: failOnResult,
 	}
 }
 
 func (ps *PhonySimulation) Step() {
-	ps.path[ps.i] = fmt.Sprintf("q%v", ps.i)
-	ps.input = ps.input[1:]
-	ps.i++
+	ps.Path[ps.I] = fmt.Sprintf("q%v", ps.I)
+	ps.Input = ps.Input[1:]
+	ps.I++
 }
 
 func (ps *PhonySimulation) Stat() Report {
@@ -30,24 +40,29 @@ func (ps *PhonySimulation) Stat() Report {
 }
 
 func (ps *PhonySimulation) Result() (Result, error) {
+	if ps.FailOnResult {
+		return Result{}, errors.New("mock failure")
+	}
 	return Result{
 		Accepted: true,
-		Path:     ps.path,
+		Path:     ps.Path,
 	}, nil
 }
 
 func (ps *PhonySimulation) Done() bool {
-	return len(ps.input) == 0
+	return len(ps.Input) == 0
 }
 
 func (ps *PhonySimulation) Kill() error {
 	return nil
 }
 
-type PhonyMachine struct{}
+type PhonyMachine struct {
+	FailOnResult bool
+}
 
 func (m *PhonyMachine) Simulate(input string) Simulation {
-	return NewPhonySimulation(input)
+	return NewPhonySimulation(input, m.FailOnResult)
 }
 
 func (m *PhonyMachine) Json() string {

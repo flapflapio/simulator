@@ -4,6 +4,8 @@ main() {
     curl -i -X POST http://localhost:8080/simulate?tape=aaba --data '
     {
       "Start": "q0",
+      "Type": "DFA",
+      "Alphabet": "ab",
       "States": [
         { "Id": "q0", "Ending": false },
         { "Id": "q1", "Ending": true }

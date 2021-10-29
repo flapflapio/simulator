@@ -10,6 +10,24 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	INVALID_MACHINE_MSG = `` +
+		`{"Err":"The machine that was sent is not ` +
+		`valid or otherwise could not be processed"}`
+
+	PLEASE_PROVIDE_A_TAPE_MSG = `` +
+		`{"Err":"Please provide an input with query param 'tape'"}`
+
+	FAILED_TO_CREATE_A_NEW_SIMULATION = `` +
+		`{"Err":"Failed to create a new simulation"}`
+
+	FAILED_TO_OBTAIN_RESULTS_OF_SIMULATION = `` +
+		`{"Err":"Failed to obtain results of simulation"}`
+
+	FAILED_TO_CREATE_A_RESPONSE = `` +
+		`{"Err":"Failed to create a response"}`
+)
+
 type SimulationController struct {
 	prefix    string
 	simulator simulation.Simulator
@@ -25,7 +43,7 @@ func New(simulator simulation.Simulator) *SimulationController {
 // Attaches this controller to the given router
 func (c *SimulationController) Attach(router *mux.Router) {
 	r := utils.CreateSubrouter(router, c.prefix)
-	r.Methods("POST").Path("").HandlerFunc(c.DoSimulation)
+	r.Methods("POST").Path("/simulate").HandlerFunc(c.DoSimulation)
 }
 
 func (c *SimulationController) WithPrefix(prefix string) *SimulationController {
@@ -40,23 +58,24 @@ func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Requ
 
 	if err != nil {
 		rw.WriteHeader(http.StatusUnprocessableEntity)
-		rw.Write([]byte("The machine that was sent is not " +
-			"valid or could not be processed\n"))
+		rw.Write([]byte(INVALID_MACHINE_MSG))
 		return
 	}
 
 	tape := r.URL.Query().Get("tape")
 	if tape == "" {
 		rw.WriteHeader(http.StatusBadRequest)
-		rw.Write([]byte("Please provide an input with query param 'tape'\n"))
+		rw.Write([]byte(PLEASE_PROVIDE_A_TAPE_MSG))
 		return
 	}
 
 	var sim simulation.Simulation
 
-	// Create a new simulation on a non-existant machine
+	// Create a new simulation
 	id, err := c.simulator.Start(m, tape)
-	check(err)
+	if check(err, rw, FAILED_TO_CREATE_A_NEW_SIMULATION) {
+		return
+	}
 
 	// Run the simulation from start to finish
 	for sim = c.simulator.Get(id); !sim.Done(); sim.Step() {
@@ -64,11 +83,15 @@ func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Requ
 
 	// Grab the result of the simulation
 	res, err := sim.Result()
-	check(err)
+	if check(err, rw, FAILED_TO_OBTAIN_RESULTS_OF_SIMULATION) {
+		return
+	}
 
 	// Serialize result
 	data, err := json.Marshal(res)
-	check(err)
+	if check(err, rw, FAILED_TO_CREATE_A_RESPONSE) {
+		return
+	}
 
 	// Write result to response body
 	rw.Header().Del("Content-Type")
@@ -78,8 +101,11 @@ func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Requ
 	c.simulator.End(id)
 }
 
-func check(err error) {
+func check(err error, rw http.ResponseWriter, msg string) bool {
 	if err != nil {
-		panic(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+		rw.Write([]byte(msg))
+		return true
 	}
+	return false
 }

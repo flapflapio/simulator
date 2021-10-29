@@ -29,10 +29,7 @@ func main() {
 		// Add any new controllers to this slice
 		controllers = []controllers.Controller{
 			schemacontroller.New(),
-
-			simulationcontroller.
-				New(simulatorService).
-				WithPrefix("/simulate"),
+			simulationcontroller.New(simulatorService),
 		}
 	)
 

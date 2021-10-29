@@ -30,7 +30,8 @@ func New(config Config) *Server {
 		prefix = "/"
 	}
 
-	router := mux.NewRouter().PathPrefix(prefix).Subrouter()
+	// router := mux.NewRouter().PathPrefix(prefix).Subrouter()
+	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFound)
 	router.MethodNotAllowedHandler = http.HandlerFunc(methodNotAllowed)
 
