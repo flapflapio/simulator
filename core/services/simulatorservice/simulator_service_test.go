@@ -9,9 +9,8 @@ import (
 )
 
 type testCase struct {
-	name    string
-	machine string
-	inputs  []string
+	name   string
+	inputs []string
 }
 
 var testCases = []testCase{
@@ -30,7 +29,6 @@ func TestStart(t *testing.T) {
 			mach := simulation.NewPhonyMachine()
 			service := New()
 			ids := startInputs(t, service, mach, &tc)
-
 			assertSimulations(t, service, ids, tc.inputs)
 			assertIdsInOrder(t, ids)
 			assertMethodWasCalled(t, "Simulate", len(ids), mach.MethodsCalled.Simulate)
