@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/flapflapio/simulator/core/app"
 	"github.com/flapflapio/simulator/core/controllers/utils"
 	"github.com/flapflapio/simulator/core/simulation"
 	"github.com/flapflapio/simulator/core/simulation/automata"
@@ -48,7 +49,7 @@ func (c *SimulationController) Attach(router *mux.Router) {
 
 func (c *SimulationController) WithPrefix(prefix string) *SimulationController {
 	return &SimulationController{
-		prefix:    prefix,
+		prefix:    app.Trim(prefix),
 		simulator: c.simulator,
 	}
 }

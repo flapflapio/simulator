@@ -9,39 +9,26 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const (
-	CONFIG_FILENAME = "config.yml"
-)
+const CONFIG_FILENAME = "config.yml"
 
 var cache = struct {
 	sync.Mutex
-	config         *Config
-	defaultConfig Config
-}{
-	defaultConfig: Config{
-		Port:           8080,
-		ReadTimeout:    60,
-		WriteTimeout:   60,
-		MaxHeaderBytes: 4096,
-	},
+	config *Config
+}{}
+
+var defaultConfig = Config{
+	Port:           8080,
+	ReadTimeout:    60,
+	WriteTimeout:   60,
+	MaxHeaderBytes: 4096,
 }
 
-var (
-	cachedConfig  *Config
-	defaultConfig = Config{
-		Port:           8080,
-		ReadTimeout:    60,
-		WriteTimeout:   60,
-		MaxHeaderBytes: 4096,
-	}
-)
-
 type Config struct {
-	Port           int     `yaml:"Port"`
-	ReadTimeout    int     `yaml:"ReadTimeout"`
-	WriteTimeout   int     `yaml:"WriteTimeout"`
-	MaxHeaderBytes int     `yaml:"MaxHeaderBytes"`
-	Name           *string `yaml:"Name"`
+	Port           int     `json:"Port"`
+	ReadTimeout    int     `json:"ReadTimeout"`
+	WriteTimeout   int     `json:"WriteTimeout"`
+	MaxHeaderBytes int     `json:"MaxHeaderBytes"`
+	Name           *string `json:"Name"`
 }
 
 // Reads parameters from `config.yml` and from env vars. The first time this
@@ -53,19 +40,12 @@ type Config struct {
 // 2. (medium) config from `config.yml`
 // 3. (low) default config, hardcoded into this file
 func GetConfig() (Config, error) {
-	// if cachedConfig == nil {
-	// 	cfg, err := getConfig()
-	// 	if err != nil {
-	// 		return defaultConfig, err
-	// 	}
-	// 	cachedConfig = &cfg
-	// }
-	// return *cachedConfig, nil
-
+	cache.Lock()
+	defer cache.Unlock()
 	if cache.config == nil {
 		cfg, err := getConfig()
 		if err != nil {
-			return cache.defaultConfig, err
+			return defaultConfig, err
 		}
 		cache.config = &cfg
 	}

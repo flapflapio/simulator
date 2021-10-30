@@ -48,10 +48,10 @@ var testCasesDoSimulation = []testCaseDoSimulation{
 	{
 		name:          "invalid-doesn't-load",
 		service:       defaultService,
-		serviceCalled: [3]int{1, 1, 1},
+		serviceCalled: [3]int{0, 0, 0},
 		method:        "POST",
 		tape:          "aaba",
-		machine:       dfa.ODDA,
+		machine:       "{}",
 		status:        http.StatusUnprocessableEntity,
 		response:      INVALID_MACHINE_MSG,
 	},
@@ -70,7 +70,7 @@ var testCasesDoSimulation = []testCaseDoSimulation{
 		service: func() *mockSimulatorService {
 			return newMockmockSimulatorService(FAIL_ON_START)
 		},
-		serviceCalled: [3]int{1, 1, 1},
+		serviceCalled: [3]int{1, 0, 0},
 		method:        "POST",
 		tape:          "aaba",
 		machine:       dfa.ODDA,
@@ -82,33 +82,20 @@ var testCasesDoSimulation = []testCaseDoSimulation{
 		service: func() *mockSimulatorService {
 			return newMockmockSimulatorService(FAIL_ON_RESULT)
 		},
-		serviceCalled: [3]int{1, 1, 1},
+		serviceCalled: [3]int{1, 1, 0},
 		method:        "POST",
 		tape:          "aaba",
 		machine:       dfa.ODDA,
 		status:        http.StatusInternalServerError,
 		response:      FAILED_TO_OBTAIN_RESULTS_OF_SIMULATION,
 	},
-	{
-		name: "invalid-json-serialization-fails",
-		service: func() *mockSimulatorService {
-			return newMockmockSimulatorService(RESULT_UNSERIALIZABLE)
-		},
-		serviceCalled: [3]int{1, 1, 1},
-		method:        "POST",
-		tape:          "aaba",
-		machine:       dfa.ODDA,
-		status:        http.StatusInternalServerError,
-		response:      FAILED_TO_CREATE_A_RESPONSE,
-	},
 }
 
 func TestDoSimulation(t *testing.T) {
-	router := mux.NewRouter()
-
 	test := func(tc testCaseDoSimulation) func(*testing.T) {
 		return func(t *testing.T) {
 			t.Parallel()
+			router := mux.NewRouter()
 			service := tc.service()
 			controller := New(service)
 			controller.Attach(router)
@@ -141,6 +128,41 @@ func TestDoSimulation(t *testing.T) {
 	for _, tc := range testCasesDoSimulation {
 		t.Run(tc.name, test(tc))
 	}
+}
+
+func TestWithPrefix(t *testing.T) {
+	t.Parallel()
+	tc := testCasesDoSimulation[0]
+	prefix := "/some/path/"
+	router := mux.NewRouter()
+	service := tc.service()
+	controller := New(service).WithPrefix(prefix)
+	controller.Attach(router)
+	recorder := httptest.NewRecorder()
+	req, err := http.NewRequest(tc.method,
+		fmt.Sprintf("%vsimulate?tape=%v", prefix, tc.tape),
+		bytes.NewBufferString(tc.machine))
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	router.ServeHTTP(recorder, req)
+	assertStuff(t, tc, recorder, service)
+}
+
+func assertStuff(
+	t *testing.T,
+	tc testCaseDoSimulation,
+	recorder *httptest.ResponseRecorder,
+	service *mockSimulatorService,
+) {
+	assertStatusCode(t, tc.status, recorder)
+	assertResponse(t, tc.response, recorder.Body.String())
+	assertMockService(t, service,
+		tc.serviceCalled[0],
+		tc.serviceCalled[1],
+		tc.serviceCalled[2])
 }
 
 func assertStatusCode(
@@ -223,10 +245,10 @@ func (s *mockSimulatorService) Start(
 	machine simulation.Machine,
 	input string,
 ) (id int, err error) {
+	s.methodsCalled.Start++
 	if s.failOnStart {
 		return 0, errors.New("mock failure")
 	}
-	s.methodsCalled.Start++
 	i := s.nextId
 	s.nextId++
 	mockMachine := &simulation.PhonyMachine{FailOnResult: s.failOnResult}

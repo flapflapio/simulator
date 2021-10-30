@@ -17,15 +17,17 @@ type PhonySimulation struct {
 		Done   int
 		Kill   int
 	}
-	FailOnResult bool
+	FailOnResult         bool
+	ResultUnserializable bool
 }
 
-func NewPhonySimulation(input string, failOnResult bool) *PhonySimulation {
+func NewPhonySimulation(input string, failOnResult, resultUnserializable bool) *PhonySimulation {
 	return &PhonySimulation{
-		Path:         make([]string, len(input)),
-		Input:        input,
-		I:            0,
-		FailOnResult: failOnResult,
+		Path:                 make([]string, len(input)),
+		Input:                input,
+		I:                    0,
+		FailOnResult:         failOnResult,
+		ResultUnserializable: resultUnserializable,
 	}
 }
 
@@ -40,13 +42,20 @@ func (ps *PhonySimulation) Stat() Report {
 }
 
 func (ps *PhonySimulation) Result() (Result, error) {
+	res := Result{
+		Accepted: true,
+		Path:     ps.Path,
+	}
+	if ps.ResultUnserializable {
+		res = Result{
+			Path: []string{""},
+		}
+	}
+
 	if ps.FailOnResult {
 		return Result{}, errors.New("mock failure")
 	}
-	return Result{
-		Accepted: true,
-		Path:     ps.Path,
-	}, nil
+	return res, nil
 }
 
 func (ps *PhonySimulation) Done() bool {
@@ -58,21 +67,44 @@ func (ps *PhonySimulation) Kill() error {
 }
 
 type PhonyMachine struct {
-	FailOnResult bool
+	Wrapped              Machine
+	FailOnResult         bool
+	ResultUnserializable bool
+	MethodsCalled        struct {
+		Simulate int
+		Json     int
+		JsonMap  int
+		String   int
+	}
+}
+
+func NewPhonyMachine() *PhonyMachine {
+	return &PhonyMachine{}
+}
+
+func NewPhonyMachineWrapper(wrapping Machine) *PhonyMachine {
+	return &PhonyMachine{Wrapped: wrapping}
 }
 
 func (m *PhonyMachine) Simulate(input string) Simulation {
-	return NewPhonySimulation(input, m.FailOnResult)
+	m.MethodsCalled.Simulate++
+	if m.Wrapped != nil {
+		return m.Wrapped.Simulate(input)
+	}
+	return NewPhonySimulation(input, m.FailOnResult, m.ResultUnserializable)
 }
 
 func (m *PhonyMachine) Json() string {
+	m.MethodsCalled.Json++
 	return ""
 }
 
 func (m *PhonyMachine) JsonMap() map[string]interface{} {
+	m.MethodsCalled.JsonMap++
 	return map[string]interface{}{}
 }
 
 func (m *PhonyMachine) String() string {
+	m.MethodsCalled.String++
 	return "PhonyMachine[...]"
 }
