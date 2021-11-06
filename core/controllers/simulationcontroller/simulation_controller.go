@@ -2,7 +2,9 @@ package simulationcontroller
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/flapflapio/simulator/core/app"
 	"github.com/flapflapio/simulator/core/controllers/utils"
@@ -45,6 +47,7 @@ func New(simulator simulation.Simulator) *SimulationController {
 func (c *SimulationController) Attach(router *mux.Router) {
 	r := utils.CreateSubrouter(router, c.prefix)
 	r.Methods("POST").Path("/simulate").HandlerFunc(c.DoSimulation)
+	r.Methods("DELETE").Path("/simulation/{id}").HandlerFunc(c.EndSimulation)
 }
 
 func (c *SimulationController) WithPrefix(prefix string) *SimulationController {
@@ -52,6 +55,33 @@ func (c *SimulationController) WithPrefix(prefix string) *SimulationController {
 		prefix:    app.Trim(prefix),
 		simulator: c.simulator,
 	}
+}
+
+func (c *SimulationController) EndSimulation(rw http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		rw.WriteHeader(http.StatusBadRequest)
+		rw.Write([]byte(`{"Err":"Simulation id cannot be empty"}`))
+		return
+	}
+
+	intVar, err := strconv.Atoi(id)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		rw.Write([]byte(`{"Err":"Simulation id is not valid"}`))
+		return
+	}
+
+	err = c.simulator.End(intVar)
+	if err != nil {
+		rw.WriteHeader(http.StatusNotFound)
+		rw.Write([]byte(fmt.Sprintf(`{"Err":"%v"}`, err)))
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	rw.Write([]byte(`{"Status":"Simulation ended successfully"}`))
+
 }
 
 func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Request) {
