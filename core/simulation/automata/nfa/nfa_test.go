@@ -24,4 +24,5 @@ func TestSimulateUnimplemented(t *testing.T) {
 	case <-time.After(1 * time.Second):
 		t.Error("timed out (1s) while waiting for NFA.Simulate to panic")
 	}
+
 }

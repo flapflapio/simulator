@@ -48,6 +48,35 @@ func (c *SimulationController) Attach(router *mux.Router) {
 	r := utils.CreateSubrouter(router, c.prefix)
 	r.Methods("POST").Path("/simulate").HandlerFunc(c.DoSimulation)
 	r.Methods("DELETE").Path("/simulation/{id}").HandlerFunc(c.EndSimulation)
+	r.Methods("POST").Path("/simulation/start").HandlerFunc(c.StartSimulation)
+}
+
+func (c *SimulationController) StartSimulation(rw http.ResponseWriter, r *http.Request) {
+	m, err := automata.Load(r.Body)
+	if err != nil {
+		rw.WriteHeader(http.StatusUnprocessableEntity)
+		rw.Write([]byte(INVALID_MACHINE_MSG))
+		return
+	}
+
+	r.ParseForm()
+	tape, ok := r.Form["tape"]
+	if !ok || len(tape) < 1 {
+		rw.WriteHeader(http.StatusUnprocessableEntity)
+		rw.Write([]byte(PLEASE_PROVIDE_A_TAPE_MSG))
+		return
+	}
+
+	id, err := c.simulator.Start(m, tape[0])
+	if err != nil {
+		rw.WriteHeader(http.StatusUnprocessableEntity)
+		rw.Write([]byte(FAILED_TO_CREATE_A_NEW_SIMULATION))
+		return
+	}
+
+	rw.Header().Add("content-type", "application/json; charset=utf-8")
+	rw.WriteHeader(http.StatusAccepted)
+	rw.Write([]byte(fmt.Sprintf(`{"Status":"Accepted","Id":%v}`, id)))
 }
 
 func (c *SimulationController) WithPrefix(prefix string) *SimulationController {
@@ -94,8 +123,9 @@ func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	tape := r.URL.Query().Get("tape")
-	if tape == "" {
+	r.ParseForm()
+	tape, ok := r.Form["tape"]
+	if !ok || len(tape) < 1 {
 		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte(PLEASE_PROVIDE_A_TAPE_MSG))
 		return
@@ -104,7 +134,7 @@ func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Requ
 	var sim simulation.Simulation
 
 	// Create a new simulation
-	id, err := c.simulator.Start(m, tape)
+	id, err := c.simulator.Start(m, tape[0])
 	if check(err, rw, FAILED_TO_CREATE_A_NEW_SIMULATION) {
 		return
 	}
