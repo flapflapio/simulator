@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-
 	var (
 		config           = configure()
 		server           = app.New(config)
@@ -24,6 +23,7 @@ func main() {
 		middleware = []app.Middleware{
 			app.LoggerAndRecovery,
 			app.TrimTrailingSlash,
+			app.CORS(*config.CORS...),
 		}
 
 		// Add any new controllers to this slice

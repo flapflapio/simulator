@@ -24,11 +24,12 @@ var defaultConfig = Config{
 }
 
 type Config struct {
-	Port           int     `json:"Port"`
-	ReadTimeout    int     `json:"ReadTimeout"`
-	WriteTimeout   int     `json:"WriteTimeout"`
-	MaxHeaderBytes int     `json:"MaxHeaderBytes"`
-	Name           *string `json:"Name"`
+	Port           int       `json:"Port"`
+	ReadTimeout    int       `json:"ReadTimeout"`
+	WriteTimeout   int       `json:"WriteTimeout"`
+	MaxHeaderBytes int       `json:"MaxHeaderBytes"`
+	Name           *string   `json:"Name"`
+	CORS           *[]string `json:"CORS"`
 }
 
 // Reads parameters from `config.yml` and from env vars. The first time this
@@ -68,6 +69,7 @@ func ReadConfig(filename string) (Config, error) {
 		WriteTimeout:   extractIntOrMinusOne(cfg, "WriteTimeout"),
 		MaxHeaderBytes: extractIntOrMinusOne(cfg, "MaxHeaderBytes"),
 		Name:           extractString(cfg, "Name"),
+		CORS:           extractSlice(cfg, "CORS"),
 	}, nil
 }
 
@@ -87,7 +89,8 @@ func MergeConfigs(cfg1 Config, cfg2 Config) Config {
 		ReadTimeout:    takeNonNegative(cfg1.ReadTimeout, cfg2.ReadTimeout),
 		WriteTimeout:   takeNonNegative(cfg1.WriteTimeout, cfg2.WriteTimeout),
 		MaxHeaderBytes: takeNonNegative(cfg1.MaxHeaderBytes, cfg2.MaxHeaderBytes),
-		Name:           takeNonNil(cfg1.Name, cfg2.Name),
+		Name:           takeNonNilStr(cfg1.Name, cfg2.Name),
+		CORS:           takeNonNilSlice(cfg1.CORS, cfg2.CORS),
 	}
 }
 
@@ -95,7 +98,14 @@ func CheckConfig(cfg Config) error {
 	return nil
 }
 
-func takeNonNil(str1, str2 *string) *string {
+func takeNonNilSlice(s1, s2 *[]string) *[]string {
+	if s2 != nil {
+		return s2
+	}
+	return s1
+}
+
+func takeNonNilStr(str1, str2 *string) *string {
 	if str2 != nil {
 		return str2
 	}
@@ -127,6 +137,10 @@ func getConfig() (Config, error) {
 		return Config{}, err
 	}
 
+	if finalConfig.CORS == nil {
+		finalConfig.CORS = &[]string{}
+	}
+
 	return finalConfig, nil
 }
 
@@ -156,6 +170,30 @@ func extractIntOrMinusOne(configMap map[string]interface{}, param string) int {
 		return -1
 	}
 	return converted
+}
+
+func extractSlice(configMap map[string]interface{}, param string) *[]string {
+	s := []string{}
+
+	got, ok := configMap[param]
+	if !ok {
+		return nil
+	}
+
+	gotSlice, ok := got.([]interface{})
+	if !ok {
+		return nil
+	}
+
+	for _, castMe := range gotSlice {
+		cast, ok := castMe.(string)
+		if !ok {
+			return nil
+		}
+		s = append(s, cast)
+	}
+
+	return &s
 }
 
 func extractString(configMap map[string]interface{}, param string) *string {
