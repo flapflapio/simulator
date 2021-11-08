@@ -3,6 +3,12 @@
 # The name of your server app
 Name: simulator
 
+# Some origins that are allowed for CORS purposes
+CORS:
+  - http://localhost:3000
+  - https://localhost:3000
+  - https://machinist.flapflap.io
+
 # Server parameters
 Port: 8080
 ReadTimeout: 3600

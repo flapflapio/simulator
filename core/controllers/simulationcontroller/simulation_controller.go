@@ -2,6 +2,7 @@ package simulationcontroller
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/flapflapio/simulator/core/app"
@@ -60,6 +61,7 @@ func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Requ
 	if err != nil {
 		rw.WriteHeader(http.StatusUnprocessableEntity)
 		rw.Write([]byte(INVALID_MACHINE_MSG))
+		fmt.Println(err)
 		return
 	}
 
