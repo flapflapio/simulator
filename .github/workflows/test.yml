@@ -32,3 +32,18 @@ jobs:
       - run: make test
       - run: make build
       - run: make build-static
+      - run: make docker
+      - name: Test docker image
+        run: |
+          export PORT=8181
+
+          docker run \
+            -d \
+            -e "PORT=$PORT" \
+            -p ${PORT}:${PORT} \
+            --rm \
+            --name simulator \
+            flapflapio/simulator:latest
+
+          ./app -health
+          curl http://localhost:8181/healthcheck

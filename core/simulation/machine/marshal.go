@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -16,8 +17,11 @@ const errMsg = "invalid %v, must be of type " +
 	"`[]byte`, " +
 	"or `io.Reader`"
 
-var cachedSchema map[string]interface{} = nil
 var defaultSchema = []byte(SCHEMA)
+var cachedSchema = struct {
+	*sync.Mutex
+	value map[string]interface{}
+}{&sync.Mutex{}, nil}
 
 func Load(document interface{}) (*Graph, error) {
 	return LoadWithSchema(document, nil)
@@ -61,14 +65,17 @@ func LoadMap(document interface{}) (map[string]interface{}, error) {
 	}
 }
 
-func GetSchema() (map[string]interface{}, error) {
-	if cachedSchema == nil {
-		err := json.Unmarshal(defaultSchema, &cachedSchema)
+func GetSchema() map[string]interface{} {
+	cachedSchema.Lock()
+	defer cachedSchema.Unlock()
+	if cachedSchema.value == nil {
+		err := json.Unmarshal(defaultSchema, &cachedSchema.value)
 		if err != nil {
-			return nil, err
+			cachedSchema.value = nil
+			return map[string]interface{}{}
 		}
 	}
-	return cachedSchema, nil
+	return cachedSchema.value
 }
 
 func ValidateJson(
@@ -261,6 +268,6 @@ func schemaOrDefault(schema interface{}) (map[string]interface{}, error) {
 	if schema != nil {
 		return LoadMap(schema)
 	} else {
-		return GetSchema()
+		return GetSchema(), nil
 	}
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/flapflapio/simulator/core/simulation/automata/dfa"
 	"github.com/flapflapio/simulator/core/simulation/machine"
+	"github.com/flapflapio/simulator/internal/simtest"
 	"github.com/obonobo/mux"
 )
 
@@ -300,14 +301,10 @@ func assertEndpoint(
 	}
 
 	recorder := httptest.NewRecorder()
-	req, err := http.NewRequest(
+	req := simtest.MustCreateRequest(t,
 		expectation.method,
 		expectation.path,
 		bytes.NewReader([]byte(*send)))
-
-	if err != nil {
-		t.Fatalf("Expected request to be created properly, but got error: %v", err)
-	}
 
 	r.ServeHTTP(recorder, req)
 

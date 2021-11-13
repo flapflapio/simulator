@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,11 +15,17 @@ const (
 	HEALTHCHECK_MESSAGE = "All good in the hood"
 )
 
+var (
+	ErrServerNotStarted = fmt.Errorf("server not started")
+)
+
 type Server struct {
 	Name       string
 	Router     *mux.Router
 	Config     Config
 	Middleware []Middleware
+	ec         chan error
+	srv        *http.Server
 }
 
 func New(config Config) *Server {
@@ -32,14 +39,29 @@ func New(config Config) *Server {
 		Path("/healthcheck").
 		HandlerFunc(healthcheck)
 
-	return &Server{Name: *config.Name, Router: router, Config: config}
+	return NewNoHandlers(router, config)
 }
 
-func (s *Server) Run() error {
+func NewNoHandlers(router *mux.Router, config Config) *Server {
+	s := &Server{
+		Router: router,
+		Config: config,
+		ec:     make(chan error, 1),
+	}
+
+	if config.Name != nil {
+		s.Name = *config.Name
+	}
+
+	return s
+}
+
+// Runs the server asychronously
+func (s *Server) Run() {
 	log.Printf("Starting %v", s.Name)
 	log.Printf("Listening on %v\n", s.Config.Port)
 
-	server := &http.Server{
+	s.srv = &http.Server{
 		Addr:           fmt.Sprintf(":%v", s.Config.Port),
 		Handler:        s.applyMiddleware(),
 		ReadTimeout:    time.Second * time.Duration(s.Config.ReadTimeout),
@@ -49,14 +71,44 @@ func (s *Server) Run() error {
 
 	log.Printf(
 		"Server config: ReadTimeout=%v, WriteTimeout=%v, MaxHeaderBytes=%v",
-		server.ReadTimeout,
-		server.WriteTimeout,
-		server.MaxHeaderBytes)
+		s.srv.ReadTimeout,
+		s.srv.WriteTimeout,
+		s.srv.MaxHeaderBytes)
 
-	return server.ListenAndServe()
+	go func() { s.ec <- s.srv.ListenAndServe() }()
 }
 
-// `stuff` is of type `controllers.Controller` or `Middleware` or a slice of either
+// Runs the server asynchronously, with a cancel function to shutdown the server
+func (s *Server) RunWithCancel() context.CancelFunc {
+	ctx, cancel := context.WithCancel(context.Background())
+	s.Run()
+	go func() {
+		select {
+		case <-ctx.Done():
+			s.Stop()
+			s.ec <- ctx.Err()
+		case err := <-s.ec:
+			s.ec <- err // Emit the error again
+		}
+	}()
+	return cancel
+}
+
+func (s *Server) Wait() <-chan error {
+	return s.ec
+}
+
+func (s *Server) Stop() error {
+	if s.srv == nil {
+		return ErrServerNotStarted
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	return s.srv.Shutdown(ctx)
+}
+
+// `stuff` is of type `controllers.Controller` or `Middleware` or a slice of
+// either
 func (s *Server) Attach(stuff ...interface{}) {
 	for _, x := range stuff {
 		switch xx := x.(type) {
@@ -92,6 +144,11 @@ func (s *Server) AttachMiddlewares(middlewares ...Middleware) {
 	}
 }
 
+// Returns the port that this server has been configured to run on
+func (s *Server) Port() int {
+	return s.Config.Port
+}
+
 // Creates an `http.Handler` by wrapping the servers Router in all registered
 // middlwares
 func (s *Server) applyMiddleware() http.Handler {
@@ -104,30 +161,38 @@ func (s *Server) applyMiddleware() http.Handler {
 
 func healthcheck(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Del("Content-Type")
-	rw.Header().Add("Content-Type", "application/json; charset=utf-8")
+	rw.Header().Add("Content-Type", "text/plain")
 	rw.WriteHeader(http.StatusOK)
-	rw.Write(ErrFormat(HEALTHCHECK_MESSAGE))
+	rw.Write([]byte(HEALTHCHECK_MESSAGE + "\n"))
 }
 
 func notFound(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Del("Content-Type")
 	rw.Header().Add("Content-Type", "application/json; charset=utf-8")
 	rw.WriteHeader(http.StatusNotFound)
-	rw.Write(ErrFormat("The route you have requested could not be found"))
+	rw.Write(notFoundMessage())
 }
 
 func methodNotAllowed(rw http.ResponseWriter, r *http.Request) {
-	method := r.Method
-	if method == "" {
-		method = "GET"
-	}
 	rw.Header().Del("Content-Type")
 	rw.Header().Add("Content-Type", "application/json; charset=utf-8")
 	rw.WriteHeader(http.StatusMethodNotAllowed)
-	rw.Write(ErrFormat(
-		fmt.Sprintf("Method '%v' is not allowed on this route", method)))
+	rw.Write(methodNotAllowedMessage(r.Method))
+}
+
+func methodNotAllowedMessage(method string) []byte {
+	return ErrFormat(
+		fmt.Sprintf("Method '%v' is not allowed on this route", method))
+}
+
+func notFoundMessage() []byte {
+	return ErrFormat("The route you have requested could not be found")
 }
 
 func ErrFormat(message string) []byte {
-	return []byte(fmt.Sprintf(`{"Err":"%v"}`+"\n", message))
+	return MsgFormat("Err", message)
+}
+
+func MsgFormat(key, value string) []byte {
+	return []byte(fmt.Sprintf(`{"%v":"%v"}`, key, value))
 }

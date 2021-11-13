@@ -1,11 +1,11 @@
 .PHONY: default build clean deploy docker docker-run docker-push dewit
 default: build
 
-SHELL	=	bash
-STAGE	?=	dev
-in		=	app/handlers
-out		=	app
 
+SHELL				=	bash
+STAGE				?=	dev
+out					=	app
+PORT				?=	8080
 TAG 	?= latest
 image 	= ghcr.io/flapflapio/simulator:$(TAG)
 
@@ -39,8 +39,7 @@ docker:
 
 docker-run:
 	docker run \
-		-p 8080:8080 \
-		-it \
+		-p $(PORT):$(PORT) \
 		--rm \
 		--name simulator \
 		$(image)
@@ -50,9 +49,8 @@ docker-push:
 
 dewit: docker docker-run
 
-# You can run tests like: ``
 test:
-	go clean --testcache && go test ./... -v
+	go clean --testcache && go test -v ./...
 
 # TODO
 install:

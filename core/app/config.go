@@ -94,10 +94,6 @@ func MergeConfigs(cfg1 Config, cfg2 Config) Config {
 	}
 }
 
-func CheckConfig(cfg Config) error {
-	return nil
-}
-
 func takeNonNilSlice(s1, s2 *[]string) *[]string {
 	if s2 != nil {
 		return s2
@@ -105,11 +101,11 @@ func takeNonNilSlice(s1, s2 *[]string) *[]string {
 	return s1
 }
 
-func takeNonNilStr(str1, str2 *string) *string {
-	if str2 != nil {
-		return str2
+func takeNonNilStr(s1, s2 *string) *string {
+	if s2 != nil {
+		return s2
 	}
-	return str1
+	return s1
 }
 
 func takeNonNegative(int1, int2 int) int {
@@ -132,10 +128,6 @@ func getConfig() (Config, error) {
 		MergeConfigs(defaultConfig, configFromFile),
 		configFromEnvVars,
 	)
-
-	if err = CheckConfig(finalConfig); err != nil {
-		return Config{}, err
-	}
 
 	if finalConfig.CORS == nil {
 		finalConfig.CORS = &[]string{}

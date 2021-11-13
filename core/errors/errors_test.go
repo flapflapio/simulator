@@ -1,21 +1,25 @@
 package errors
 
 import (
+	"errors"
+	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestNoPossibleTransition(t *testing.T) {
-	e := NoTrans()
-	assert.Equal(t, NO_POSSIBLE_TRANSITION, e.Error())
-	e = NoPossibleTransition{}
-	assert.Equal(t, "", e.Error())
+func TestErrNoTransition(t *testing.T) {
+	err := thrower(ErrNoTransition)
+	if !errors.Is(err, ErrNoTransition) {
+		t.Fail()
+	}
 }
 
-func TestSimulationNotDone(t *testing.T) {
-	e := NotDone()
-	assert.Equal(t, SIMULATION_INCOMPLETE, e.Error())
-	e = SimulationNotDone{}
-	assert.Equal(t, "", e.Error())
+func TestErrSimulationIncomplete(t *testing.T) {
+	err := thrower(ErrSimulationIncomplete)
+	if !errors.Is(err, ErrSimulationIncomplete) {
+		t.Fail()
+	}
+}
+
+func thrower(err error) error {
+	return fmt.Errorf("err: %w", err)
 }
