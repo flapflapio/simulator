@@ -15,25 +15,20 @@ func Load(document interface{}) (*DFA, error) {
 func LoadWithSchema(document interface{}, schema interface{}) (*DFA, error) {
 	dfa := &DFA{}
 	documentMap, err := machine.LoadMap(document)
+	errf := func(err error) error { return fmt.Errorf("error loading schema: %w", err) }
+
 	if err != nil {
-		return nil, err
+		return nil, errf(err)
+	} else if dfa.Graph, err = machine.LoadWithSchema(documentMap, schema); err != nil {
+		return nil, errf(err)
+	} else if err = addAlphabet(dfa, documentMap); err != nil {
+		return nil, errf(err)
+	} else if err = checkThatStatesHaveATransitionForEverySymbol(dfa); err != nil {
+		return nil, errf(err)
+	} else if err = checkThatTransitionSymbolsMatchAlphabet(dfa); err != nil {
+		return nil, errf(err)
 	}
-	dfa.Graph, err = machine.LoadWithSchema(documentMap, schema)
-	if err != nil {
-		return nil, err
-	}
-	err = addAlphabet(dfa, documentMap)
-	if err != nil {
-		return nil, err
-	}
-	err = checkThatStatesHaveATransitionForEverySymbol(dfa)
-	if err != nil {
-		return nil, err
-	}
-	err = checkThatTransitionSymbolsMatchAlphabet(dfa)
-	if err != nil {
-		return nil, err
-	}
+
 	return dfa, nil
 }
 

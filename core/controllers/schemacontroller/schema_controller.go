@@ -62,10 +62,7 @@ func Schema(rw http.ResponseWriter, r *http.Request) {
 }
 
 func getSchema() []byte {
-	schema, err := machine.GetSchema()
-	if err != nil {
-		panic(err)
-	}
+	schema := machine.GetSchema()
 	data, err := json.Marshal(schema)
 	if err != nil {
 		panic(err)

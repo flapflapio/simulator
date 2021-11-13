@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/flapflapio/simulator/internal/simtest"
 	"github.com/obonobo/mux"
 	"github.com/stretchr/testify/assert"
 )
@@ -56,15 +57,9 @@ func TestCompact(t *testing.T) {
 func TestCreateSubrouter(t *testing.T) {
 	subrouter := CreateSubrouter(mux.NewRouter(), "/some/path")
 	recorder := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/some/path/route", nil)
-	if err != nil {
-		t.Fatalf("Expected no error but got %v", err)
-	}
+	req := simtest.MustCreateRequest(t, "GET", "/some/path/route", nil)
 
-	subrouter.Path("/route").HandlerFunc(func(
-		rw http.ResponseWriter,
-		r *http.Request,
-	) {
+	subrouter.Path("/route").HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 		rw.Write([]byte("good"))
 	})

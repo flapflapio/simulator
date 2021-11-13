@@ -12,6 +12,7 @@ import (
 
 	"github.com/flapflapio/simulator/core/simulation"
 	"github.com/flapflapio/simulator/core/simulation/automata/dfa"
+	"github.com/flapflapio/simulator/internal/simtest"
 	"github.com/obonobo/mux"
 )
 
@@ -107,13 +108,10 @@ func TestDoSimulation(t *testing.T) {
 				tt = fmt.Sprintf("?tape=%v", tc.tape)
 			}
 
-			req, err := http.NewRequest(tc.method,
+			req := simtest.MustCreateRequest(t,
+				tc.method,
 				fmt.Sprintf("/simulate%v", tt),
 				bytes.NewBufferString(tc.machine))
-
-			if err != nil {
-				t.Fatalf("Expected no error while building request, but got: %v", err)
-			}
 
 			router.ServeHTTP(recorder, req)
 			assertStatusCode(t, tc.status, recorder)
@@ -139,13 +137,11 @@ func TestWithPrefix(t *testing.T) {
 	controller := New(service).WithPrefix(prefix)
 	controller.Attach(router)
 	recorder := httptest.NewRecorder()
-	req, err := http.NewRequest(tc.method,
+
+	req := simtest.MustCreateRequest(t,
+		tc.method,
 		fmt.Sprintf("%vsimulate?tape=%v", prefix, tc.tape),
 		bytes.NewBufferString(tc.machine))
-
-	if err != nil {
-		t.Error(err)
-	}
 
 	router.ServeHTTP(recorder, req)
 	assertStuff(t, tc, recorder, service)

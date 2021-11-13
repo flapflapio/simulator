@@ -41,7 +41,7 @@ func (dfa *DFASimulation) Stat() simulation.Report {
 // Returns a SimulationIncomplete error if the simulation is not done
 func (dfa *DFASimulation) Result() (simulation.Result, error) {
 	if !dfa.Done() {
-		return simulation.Result{}, errors.NotDone()
+		return simulation.Result{}, errors.ErrSimulationIncomplete
 	}
 	return simulation.Result{
 		Accepted:       dfa.isAccepted(),
@@ -78,7 +78,7 @@ func (dfa *DFASimulation) nextTransition() (machine.Transition, error) {
 			return t, nil
 		}
 	}
-	return machine.Transition{}, errors.NoTrans()
+	return machine.Transition{}, errors.ErrNoTransition
 }
 
 func (dfa *DFASimulation) shouldTakeTransition(t machine.Transition) bool {
