@@ -1,4 +1,4 @@
-.PHONY: default build clean deploy docker docker-run dewit
+.PHONY: default build clean deploy docker docker-run docker-push dewit
 default: build
 
 SHELL	=	bash
@@ -6,7 +6,8 @@ STAGE	?=	dev
 in		=	app/handlers
 out		=	app
 
-docker_image_tag = flapflapio/simulator:latest
+TAG 	?= latest
+image 	= ghcr.io/flapflapio/simulator:$(TAG)
 
 download:
 	go get -d -v
@@ -33,7 +34,7 @@ clean:
 	rm -rf ./$(out) ./vendor
 
 docker:
-	docker build -t "$(docker_image_tag)" -f docker/Dockerfile .
+	docker build -t "$(image)" -f docker/Dockerfile .
 	docker image prune -f
 
 docker-run:
@@ -42,7 +43,10 @@ docker-run:
 		-it \
 		--rm \
 		--name simulator \
-		$(docker_image_tag)
+		$(image)
+
+docker-push:
+	docker push "$(image)"
 
 dewit: docker docker-run
 

@@ -1,39 +1,68 @@
-name: Update GitHub Packages
+name: Update GitHub Packages, deploy to AWS
 
 on:
   push:
+    branches:
+      - main
     tags:
       - v*
 
+env:
+  APP_VERSION: 0.1.0
+  CHART_NAME: simulator
+
 jobs:
-  package:
-    name: Package the app
+  push:
+    name: GitHub Packages Update
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
-
-    env:
-      GO_VERSION: "1.16.3"
-
     steps:
-      - name: Checkout project
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Use go${{ env.GO_VERSION }}
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^${{ env.GO_VERSION }}
-      - run: go version
+      - name: Set image tag
+        run: echo "TAG=${GITHUB_REF_NAME}-${APP_VERSION}-${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
-      - name: Build and package
-        run: |
-          # TODO: Package up the app
+      - name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u flapflapio --password-stdin
+
+      - name: Build image
+        run: make docker
+
+      - name: Push image
+        run: make docker-push
 
   deploy:
-    name: Update GitHub Packages
+    name: Deploy to AWS
     runs-on: ubuntu-latest
-    needs: package
-
+    needs: push
+    if: github.event_name == 'push'
     steps:
-      - name: Deploy to GitHub packages
+      - uses: actions/checkout@v2
+
+      - name: Create KUBECONFIG
         run: |
-          # TODO: Do the deployment
+          echo "${{ secrets.KUBECONFIG_FILE }}" >> kubeconfig.yml
+          chmod 0600 kubeconfig.yml
+          echo "KUBECONFIG=$(realpath kubeconfig.yml)" >> $GITHUB_ENV
+
+      - name: Download Helm
+        run: |
+          wget https://get.helm.sh/helm-v3.8.0-rc.1-linux-amd64.tar.gz
+          tar -xvzf helm*.tar.gz
+          mv linux*/helm ./
+          set -ex
+          ./helm version
+          ./helm list --all-namespaces
+          set +ex
+
+      - name: Deploy chart
+        run: |
+          set -ex
+          # TODO: Write command to deploy chart
+          # helm upgrade \
+          #   --install \
+          #   --atomic \
+          #   --wait \
+          #   --timeout '360s' \
+          #   "$CHART_NAME" \
+          #   ./kubernetes/simulator-chart
