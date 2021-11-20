@@ -1,0 +1,67 @@
+# TODO:
+#   - Write terraform config to create the IAM roles + policy and  deploy the
+#     Load Balancer Controller via Helm
+#   -
+
+# Testing out our container on the EKS cluster
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simulator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: simulator
+  template:
+    metadata:
+      labels:
+        app: simulator
+    spec:
+      containers:
+        - name: simulator
+          image: obonobo/simulator:latest
+          resources:
+            requests:
+              memory: "0"
+              cpu: "0"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 8080
+
+# Service for exposing our pods
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simulator-service
+spec:
+  selector:
+    app: simulator
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+# Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flapflap-ingress
+  labels:
+    name: flapflap-ingress
+spec:
+  rules:
+    - host: api.flapflap.io
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: simulator-service
+                port:
+                  number: 8080
