@@ -60,14 +60,14 @@ func (c *SimulationController) WithPrefix(prefix string) *SimulationController {
 func (c *SimulationController) EndSimulation(rw http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	if id == "" {
-		rw.WriteHeader(http.StatusBadRequest)
+		rw.WriteHeader(http.StatusUnprocessableEntity)
 		rw.Write([]byte(`{"Err":"Simulation id cannot be empty"}`))
 		return
 	}
 
 	intVar, err := strconv.Atoi(id)
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
+		rw.WriteHeader(http.StatusUnprocessableEntity)
 		rw.Write([]byte(`{"Err":"Simulation id is not valid"}`))
 		return
 	}
