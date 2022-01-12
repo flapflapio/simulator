@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    email: ethanbnb@gmail.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt
+    solvers:
+      - selector:
+          dnsZones:
+            - "flapflap.io"
+        dns01:
+          route53:
+            region: us-east-1
+            hostedZoneID: Z08278183BK02AAKTYMMU
+            # role: arn:aws:iam::081940731328:role/cert-manager

@@ -1,0 +1,22 @@
+# App name
+name: simulator
+
+# Docker image to use
+imageRepo: ghcr.io/flapflapio/simulator
+imageTag: latest
+
+# Pull policy for the image. When using minikube you might want to set this to
+# "Never"
+imagePullPolicy: "Always"
+
+# The container port as well as the service port for the app
+port: 8080
+
+# The number of Deployment replicas
+replicas: 1
+
+# Whether cert-manager has been deployed on the cluster
+certManager: true
+
+# The cert-manager ClusterIssuer to use for provisioning SSL certificates
+clusterIssuer: letsencrypt
