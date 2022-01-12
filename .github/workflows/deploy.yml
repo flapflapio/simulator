@@ -6,10 +6,20 @@ on:
       - main
     tags:
       - v*
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: "Log level"
+        required: true
+        default: "warning"
+      tags:
+        required: false
+        description: "Test scenario tags"
 
 env:
   APP_VERSION: 0.1.0
   CHART_NAME: simulator
+  NAMESPACE: flapflap
 
 jobs:
   push:
@@ -39,6 +49,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Set image tag
+        run: echo "TAG=${GITHUB_REF_NAME}-${APP_VERSION}-${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+
       - name: Create KUBECONFIG
         run: |
           echo "${{ secrets.KUBECONFIG_FILE }}" >> kubeconfig.yml
@@ -58,11 +71,12 @@ jobs:
       - name: Deploy chart
         run: |
           set -ex
-          # TODO: Write command to deploy chart
-          # helm upgrade \
-          #   --install \
-          #   --atomic \
-          #   --wait \
-          #   --timeout '360s' \
-          #   "$CHART_NAME" \
-          #   ./kubernetes/simulator-chart
+          helm upgrade \
+            --namespace "$NAMESPACE" \
+            --install \
+            --atomic \
+            --wait \
+            --timeout '360s' \
+            --set imageTag="$TAG" \
+            "$CHART_NAME" \
+            ./kubernetes/simulator-chart
