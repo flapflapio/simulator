@@ -90,6 +90,7 @@ func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Requ
 	if err != nil {
 		rw.WriteHeader(http.StatusUnprocessableEntity)
 		rw.Write([]byte(INVALID_MACHINE_MSG))
+		fmt.Println(err)
 		return
 	}
 

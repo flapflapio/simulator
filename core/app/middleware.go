@@ -3,10 +3,27 @@ package app
 import (
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/urfave/negroni"
 )
 
 type Middleware func(http.Handler) http.Handler
+
+// `origins` are some extra origins to add to the OPTIONS response
+func CORS(origins ...string) Middleware {
+	return handlers.CORS(
+		handlers.AllowedMethods([]string{
+			"GET", "HEAD", "POST",
+			"PUT", "DELETE", "OPTIONS",
+			"PATCH", "CONNECT", "TRACE",
+		}),
+		handlers.AllowedOrigins(origins),
+		handlers.AllowedHeaders([]string{
+			"X-Requested-With",
+			"Content-Type",
+		}),
+	)
+}
 
 func LoggerAndRecovery(h http.Handler) http.Handler {
 	n := negroni.New()
