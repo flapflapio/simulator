@@ -15,6 +15,10 @@ on:
         required: false
         description: "Test scenario tags"
 
+env:
+  IMAGE_REPO: ghcr.io/flapflapio/simulator
+  IMAGE_TAG: latest
+
 jobs:
   test:
     name: test
@@ -43,7 +47,7 @@ jobs:
             -p ${PORT}:${PORT} \
             --rm \
             --name simulator \
-            flapflapio/simulator:latest
+            "${IMAGE_REPO}:${IMAGE_TAG}"
 
           ./app -health
-          curl http://localhost:8181/healthcheck
+          curl http://localhost:$PORT/healthcheck
