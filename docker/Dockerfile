@@ -8,7 +8,7 @@ RUN apt-get update                                          \
     && apt-get install -y make bash tzdata ca-certificates  \
     && make build-static                                    \
     && adduser                                              \
-        --disabled-passwor                                  \
+        --disabled-password                                 \
         --gecos ""                                          \
         --home "/homeless"                                  \
         --shell "/noshell"                                  \
