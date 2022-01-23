@@ -29,6 +29,9 @@ go get -d -v     # Download dependencies
 go build -o app  # Build the app
 ./app            # Run the app
 
+# build the app for windows
+go build -o app.exe
+
 # Or to build with static linking:
 GOOS=linux \
 GO111MODULE=on \
