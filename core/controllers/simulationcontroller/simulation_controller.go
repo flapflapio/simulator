@@ -1,16 +1,19 @@
 package simulationcontroller
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/flapflapio/simulator/core/app"
 	"github.com/flapflapio/simulator/core/controllers/utils"
 	"github.com/flapflapio/simulator/core/simulation"
 	"github.com/flapflapio/simulator/core/simulation/automata"
+	"github.com/gorilla/websocket"
 	"github.com/obonobo/mux"
 )
 
@@ -162,6 +165,59 @@ func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Requ
 	rw.WriteHeader(http.StatusOK)
 	rw.Write(append(data, '\n'))
 	c.simulator.End(id)
+}
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+type WebSocketMessage struct {
+	Op      string                 `json:"op"`
+	Params  map[string]interface{} `json:"params"`
+	Payload map[string]interface{} `json:"payload"`
+}
+
+// This endpoint receives websocket connections
+func (c *SimulationController) WebSocket(rw http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(rw, r, nil)
+	if err != nil {
+		log.Println(err)
+		return // Upgrade will reply automatically with an error response
+	}
+	defer conn.Close()
+
+	// For now, the server simply waits for requests on the connection and
+	// responds with the result of the operation requested
+
+	conn.SetReadLimit(1024)
+	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetPongHandler(func(appData string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
+	for {
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			unexpected := websocket.IsUnexpectedCloseError(
+				err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure)
+			if unexpected {
+				log.Printf("websocket error: %v", err)
+			}
+			break
+		}
+
+		// Trimming the message a little bit
+		message = bytes.TrimSpace(bytes.Replace(message, []byte("\n"), []byte(" "), -1))
+
+		var wsMessage WebSocketMessage
+		err = json.Unmarshal(message, &wsMessage)
+		if err != nil {
+			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			conn.WriteMessage(websocket.TextMessage, []byte{})
+		}
+	}
 }
 
 func check(err error, rw http.ResponseWriter, msg string) bool {
