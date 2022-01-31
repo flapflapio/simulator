@@ -115,7 +115,6 @@ func (c *SimulationController) EndSimulation(rw http.ResponseWriter, r *http.Req
 
 	rw.WriteHeader(http.StatusOK)
 	rw.Write([]byte(`{"Status":"Simulation ended successfully"}`))
-
 }
 
 func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Request) {
@@ -176,7 +175,7 @@ var upgrader = websocket.Upgrader{
 
 type WebSocketMessage struct {
 	Op      string                 `json:"op"`
-	Params  map[string]interface{} `json:"params"`
+	Params  map[string]string      `json:"params"`
 	Payload map[string]interface{} `json:"payload"`
 }
 
@@ -215,13 +214,111 @@ func (c *SimulationController) WebSocket(rw http.ResponseWriter, r *http.Request
 
 		var wsMessage WebSocketMessage
 		err = json.Unmarshal(message, &wsMessage)
+
+		checkWsErr := func(err error) bool {
+			if err != nil {
+				conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+				conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Err: %v", err)))
+				return true
+			}
+			return false
+		}
+
 		if err != nil {
-			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			conn.WriteMessage(websocket.TextMessage, []byte("Err: bad message"))
+			err = fmt.Errorf("invalid command")
+		}
+
+		if checkWsErr(err) {
+			continue
 		}
 
 		// Otherwise log the message
 		log.Println(wsMessage)
+
+		switch wsMessage.Op {
+		case "DO":
+			m, err := automata.Load(wsMessage.Payload)
+			if checkWsErr(err) {
+				continue
+			}
+
+			tape, ok := wsMessage.Params["tape"]
+			if !ok || len(tape) < 1 {
+				if checkWsErr(fmt.Errorf("please provide an input tape in the 'params' JSON field of your request")) {
+					continue
+				}
+			}
+
+			var sim simulation.Simulation
+
+			// Create a new simulation
+			id, err := c.simulator.Start(m, tape)
+			if checkWsErr(err) {
+				continue
+			}
+			defer c.simulator.End(id)
+
+			// Run the simulation from start to finish
+			for sim = c.simulator.Get(id); !sim.Done(); sim.Step() {
+			}
+
+			// Grab the result of the simulation
+			res, err := sim.Result()
+			if checkWsErr(err) {
+				continue
+			}
+
+			// Serialize result
+			data, err := json.Marshal(res)
+			if checkWsErr(err) {
+				continue
+			}
+
+			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			conn.WriteMessage(websocket.TextMessage, data)
+		case "START":
+			m, err := automata.Load(wsMessage.Payload)
+			if checkWsErr(err) {
+				continue
+			}
+
+			tape, ok := wsMessage.Params["tape"]
+			if !ok || len(tape) < 1 {
+				if checkWsErr(fmt.Errorf("please provide an input tape in the 'params' JSON field of your request")) {
+					continue
+				}
+			}
+
+			id, err := c.simulator.Start(m, tape)
+			if checkWsErr(err) {
+				continue
+			}
+
+			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"Status":"Accepted","Id":%v}`, id)))
+		case "END":
+			id, ok := wsMessage.Params["id"]
+			if !ok || len(id) < 1 {
+				if checkWsErr(fmt.Errorf("please provide a simulation id in the 'params' JSON field of your command")) {
+					continue
+				}
+			}
+
+			intVar, err := strconv.Atoi(id)
+			if err != nil {
+				checkWsErr(fmt.Errorf("id is not valid"))
+			}
+
+			err = c.simulator.End(intVar)
+			if err != nil {
+				checkWsErr(fmt.Errorf("id is not valid"))
+			}
+
+			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			conn.WriteMessage(websocket.TextMessage, []byte(`{"Status":"Simulation ended successfully"}`))
+		default:
+			checkWsErr(fmt.Errorf("unsupported operation '%v'", wsMessage.Op))
+		}
 	}
 }
 
