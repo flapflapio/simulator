@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/flapflapio/simulator/core/app"
 	"github.com/flapflapio/simulator/core/controllers"
@@ -25,10 +24,10 @@ var (
 	// reverse order (i.e. mids at the top of this slice is applied
 	// first)
 	mids = []app.Middleware{
-		app.Timeout(60 * time.Second),
-		app.LoggerAndRecovery,
-		app.TrimTrailingSlash,
-		app.CORS(*cfg.CORS...),
+		// app.Timeout(60 * time.Second),
+		// app.LoggerAndRecovery,
+		// app.TrimTrailingSlash,
+		// app.CORS(*cfg.CORS...),
 	}
 
 	// Add any new cntrls to this slice

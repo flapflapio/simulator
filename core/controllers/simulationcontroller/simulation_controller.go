@@ -53,6 +53,7 @@ func (c *SimulationController) Attach(router *mux.Router) {
 	r.Methods("POST").Path("/simulate").HandlerFunc(c.DoSimulation)
 	r.Methods("DELETE").Path("/simulation/{id}").HandlerFunc(c.EndSimulation)
 	r.Methods("POST").Path("/simulation/start").HandlerFunc(c.StartSimulation)
+	r.Methods("GET").Path("/ws").HandlerFunc(c.WebSocket)
 }
 
 func (c *SimulationController) StartSimulation(rw http.ResponseWriter, r *http.Request) {
@@ -170,6 +171,7 @@ func (c *SimulationController) DoSimulation(rw http.ResponseWriter, r *http.Requ
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
 type WebSocketMessage struct {
@@ -215,8 +217,11 @@ func (c *SimulationController) WebSocket(rw http.ResponseWriter, r *http.Request
 		err = json.Unmarshal(message, &wsMessage)
 		if err != nil {
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			conn.WriteMessage(websocket.TextMessage, []byte{})
+			conn.WriteMessage(websocket.TextMessage, []byte("Err: bad message"))
 		}
+
+		// Otherwise log the message
+		log.Println(wsMessage)
 	}
 }
 
