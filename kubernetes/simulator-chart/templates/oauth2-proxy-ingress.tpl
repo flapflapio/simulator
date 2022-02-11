@@ -8,9 +8,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "ingress-oauth2" }}
+  name: {{ include "ingress-oauth2" . }}
   labels:
-    name: {{ include "ingress-oauth2" }}
+    name: {{ include "ingress-oauth2" . }}
   annotations:
     {{- include "simulator-chart.ingressAnnotations" . | nindent 4 }}
 spec:

@@ -76,7 +76,8 @@ jobs:
             --install \
             --atomic \
             --wait \
-            --timeout '360s' \
+            --timeout '1200s' \
             --set imageTag="$TAG" \
+            --set oauth2.clientSecret="${{ secrets.OAUTH_CLIENT_SECRET }}" \
             "$CHART_NAME" \
             ./kubernetes/simulator-chart

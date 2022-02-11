@@ -69,6 +69,7 @@ export class FlapFlapCognitoStack extends Stack {
       "flapflap-userpool-client",
       {
         userPool,
+        generateSecret: true,
         userPoolClientName: "flapflap-userpool-client",
         authFlows: {
           adminUserPassword: true,

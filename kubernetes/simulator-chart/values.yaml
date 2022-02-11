@@ -29,4 +29,5 @@ oauth2:
   serviceName: oauth2-proxy
   port: 4180
   clientId: 6q8l540m8ptfffvjp7qg75g1lm
+  clientSecret: xxxxxxxxxxxxxxxxxxxxxxxx
   cookieSecret: 8hOti7As5aiI2tJpkS+ktQ==

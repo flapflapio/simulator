@@ -48,8 +48,8 @@ spec:
           env:
           - name: OAUTH2_PROXY_CLIENT_ID
             value: {{ .Values.oauth2.clientId }}
-          # - name: OAUTH2_PROXY_CLIENT_SECRET
-          #   value: <paste-the-secret>
+          - name: OAUTH2_PROXY_CLIENT_SECRET
+            value: {{ .Values.oauth2.clientSecret }}
           - name: OAUTH2_PROXY_COOKIE_SECRET
             value: {{ .Values.oauth2.cookieSecret }}
 {{- end}}
