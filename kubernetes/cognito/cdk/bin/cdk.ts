@@ -12,5 +12,5 @@ const flapflapstack = new FlapFlapCognitoStack(app, "FlapFlapCognitoStack", {
   },
 });
 
-// Tag all resources in this stack with "flapflap": ""
-Tags.of(flapflapstack).add("flapflap", "");
+// Tag all resources in this stack with "flapflap":
+Tags.of(flapflapstack).add("flapflap", "flapflap");

@@ -1,12 +1,11 @@
 import {
+  aws_cognito,
+  CfnOutput,
+  RemovalPolicy,
   Stack,
   StackProps,
-  aws_cognito,
-  RemovalPolicy,
-  CfnOutput,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class FlapFlapCognitoStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -86,9 +85,11 @@ export class FlapFlapCognitoStack extends Stack {
           .withStandardAttributes(cognitoStandardAttributes)
           .withCustomAttributes("isAdmin"),
         writeAttributes:
-          new aws_cognito.ClientAttributes().withStandardAttributes(
-            cognitoStandardAttributes
-          ),
+          new aws_cognito.ClientAttributes().withStandardAttributes({
+            ...cognitoStandardAttributes,
+            emailVerified: false,
+            phoneNumberVerified: false,
+          }),
       }
     );
 
