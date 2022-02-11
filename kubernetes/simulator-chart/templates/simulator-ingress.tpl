@@ -11,8 +11,11 @@ metadata:
     name: {{ .Values.name }}-ingress
   annotations:
     {{- include "simulator-chart.ingressAnnotations" . | nindent 4 }}
+    {{- if .Values.oauth2.enabled }}
+    nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
+    {{- end}}
 spec:
-  # ingressClassName: nginx
   {{- if .Values.certManager }}
   tls:
     - hosts:
