@@ -20,3 +20,14 @@ certManager: true
 
 # The cert-manager ClusterIssuer to use for provisioning SSL certificates
 clusterIssuer: letsencrypt
+
+# Oauth2 enabled - will create 1 extra ingress + add annotations to the
+# simulator ingress so that it requires auth. If this option is enabled,
+# oauth2-proxy have already been deployed on the cluster
+oauth2:
+  enabled: true
+  serviceName: oauth2-proxy
+  port: 4180
+  clientId: 6q8l540m8ptfffvjp7qg75g1lm
+  clientSecret: xxxxxxxxxxxxxxxxxxxxxxxx
+  cookieSecret: 8hOti7As5aiI2tJpkS+ktQ==
