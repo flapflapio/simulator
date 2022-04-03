@@ -2,12 +2,29 @@ package app
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/urfave/negroni"
 )
 
 type Middleware func(http.Handler) http.Handler
+
+// Adds a timeout to request handlers the message is optional. If a message is
+// not specified, a default message will be used
+func Timeout(duration time.Duration, message ...string) Middleware {
+	msg := `{"Err":"Request is taking too long to process"}`
+	if len(message) > 0 {
+		msg = ""
+		for _, s := range message {
+			msg += s
+		}
+	}
+
+	return func(h http.Handler) http.Handler {
+		return http.TimeoutHandler(h, duration, msg)
+	}
+}
 
 // `origins` are some extra origins to add to the OPTIONS response
 func CORS(origins ...string) Middleware {

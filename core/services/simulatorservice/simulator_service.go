@@ -10,7 +10,7 @@ import (
 type SimulatorService struct {
 	sims   map[int]simulation.Simulation
 	nextId int
-	lock   sync.Mutex
+	sync.Mutex
 }
 
 func New() *SimulatorService {
@@ -24,8 +24,8 @@ func (ss *SimulatorService) Start(
 	machine simulation.Machine,
 	input string,
 ) (id int, err error) {
-	ss.lock.Lock()
-	defer ss.lock.Unlock()
+	ss.Lock()
+	defer ss.Unlock()
 
 	i := ss.nextId
 	ss.nextId++
@@ -35,16 +35,16 @@ func (ss *SimulatorService) Start(
 
 // Get a simulation by id
 func (ss *SimulatorService) Get(simulationId int) simulation.Simulation {
-	ss.lock.Lock()
-	defer ss.lock.Unlock()
+	ss.Lock()
+	defer ss.Unlock()
 	sim := ss.sims[simulationId]
 	return sim
 }
 
 // Ends a simulation
 func (ss *SimulatorService) End(simulationId int) error {
-	ss.lock.Lock()
-	defer ss.lock.Unlock()
+	ss.Lock()
+	defer ss.Unlock()
 
 	if _, ok := ss.sims[simulationId]; !ok {
 		return fmt.Errorf("simulation with id '%v' does not exist", simulationId)
